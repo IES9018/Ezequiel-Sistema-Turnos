@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nombre    String
+  email     String   @unique
+  password  String
+  rol       Rol      @default(CLIENTE)
+  turnos    Turno[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Servicio {
+  id              String   @id @default(uuid())
+  nombre          String
+  duracionMinutos Int
+  precio          Float
+  activo          Boolean  @default(true)
+  turnos          Turno[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Profesional {
+  id             String              @id @default(uuid())
+  nombre         String
+  email          String              @unique
+  especialidad   String
+  activo         Boolean             @default(true)
+  turnos         Turno[]
+  disponibilidad Disponibilidad[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model Turno {
+  id             String   @id @default(uuid())
+  clienteId      String
+  profesionalId  String
+  servicioId     String
+  fecha          DateTime
+  horaInicio     String
+  horaFin        String
+  estado         Estado   @default(PENDIENTE)
+  cliente        Usuario  @relation(fields: [clienteId], references: [id])
+  profesional    Profesional @relation(fields: [profesionalId], references: [id])
+  servicio       Servicio @relation(fields: [servicioId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([profesionalId, fecha, horaInicio])
+}
+
+model Disponibilidad {
+  id             String      @id @default(uuid())
+  profesionalId  String
+  dia            DiaSemana
+  horaInicio     String
+  horaFin        String
+  profesional    Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@unique([profesionalId, dia])
+}
+
+enum Rol {
+  ADMIN
+  CLIENTE
+}
+
+enum Estado {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+  COMPLETADO
+}
+
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
