@@ -45,24 +45,33 @@
 
 ---
 
+### 2.3 Generación del README.md
+
+- **Herramienta utilizada:** OpenCode (modelo big-pickle)
+- **Prompt utilizado:** Se solicitó generar documentación del repositorio con estructura, requisitos de instalación y scripts.
+- **Errores detectados:**
+  - El frontend (React) se listó como "próximamente" ya que aún no está inicializado, lo que da una vista honesta del estado del proyecto.
+- **Calidad del código generado:** El README documenta correctamente el stack, la estructura y los pasos de instalación.
+
 ## 3. Seguridad
 
 - **Secrets:** No se expuso ningún secret o clave sensible en el repositorio.
-- **.gitignore:** Pendiente de agregar un `.gitignore` adecuado para el proyecto (Node.js, TypeScript, .env).
+- **.gitignore:** Configurado con exclusiones para `node_modules/`, `.env`, build artifacts y archivos del IDE.
 - **Entradas sanitizadas:** Pendiente de implementar en la fase de desarrollo del backend.
 
 ---
 
 ## 4. Calidad automatizada
 
-- **Linter/Formatter:** Pendiente de configurar (ESLint + Prettier) en la fase de setup del proyecto.
+- **Linter/Formatter:** Configurado (ESLint + Prettier + typescript-eslint). `npx eslint server/` pasa sin errores.
+- **TypeScript estricto:** Configurado. `npx tsc --noEmit` pasa sin errores. Prohibido el uso de `any`.
 - **Checklists de PR:** Pendiente de completar en la creación formal del PR.
 
 ---
 
 ## 5. Conclusiones
 
-El Sprint 1 se completó en su fase de setup y especificación. Los entregables principales (SPEC.md, ADR-001, .opencoderules) están presentes y cumplen con los criterios de la rúbrica. Las mejoras pendientes (`.gitignore`, linter, PR formal) se abordarán en las siguientes iteraciones del proyecto.
+El Sprint 1 se completó en su fase de setup y especificación, incluyendo el setup del proyecto backend (Express + TypeScript + Prisma + PostgreSQL) y la configuración de calidad automatizada (ESLint, Prettier, TypeScript estricto). Los entregables principales (SPEC.md, ADR-001, .opencoderules, informe de auditoría, .gitignore) están presentes y cumplen con los criterios de la rúbrica. Queda pendiente la creación formal del PR y la vinculación al tablero Kanban.
 
 ---
 
