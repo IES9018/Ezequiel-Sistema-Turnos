@@ -72,6 +72,10 @@ npm run dev
 - [Decisiones arquitectónicas (ADRs)](docs/adr/)
 - [Informes de auditoría](docs/auditoria/)
 
+## 🗓️ Gestión
+
+Tablero del sprint: [Kanban](https://github.com/orgs/IES9018/projects/2)
+
 ## Consideraciones
 
 - **Arquitectura:** Ver [ADR-001](docs/adr/ADR-001-stack-tecnologico.md) para la justificación del stack.
