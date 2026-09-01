@@ -6,7 +6,7 @@ Aplicación web para gestionar turnos de una peluquería/barbería: reserva onli
 
 | Capa | Tecnología |
 |------|-----------|
-| **Frontend** | React + Vite + TypeScript + TailwindCSS (próximamente) |
+| **Frontend** | React + Vite + TypeScript + TailwindCSS |
 | **Backend** | Node.js + Express + TypeScript |
 | **Base de datos** | PostgreSQL + Prisma ORM |
 | **Autenticación** | JWT + bcrypt |
@@ -14,6 +14,8 @@ Aplicación web para gestionar turnos de una peluquería/barbería: reserva onli
 ## Estructura
 
 ```
+├── client/             # Frontend React (Vite)
+│   └── src/            # Componentes, páginas, servicios, tipos
 ├── server/              # Backend Express
 │   ├── index.ts         # Punto de entrada
 │   ├── routes/          # Definición de rutas

@@ -2,7 +2,7 @@
 
 ## 1. Alcance Permitido
 
-- **Frontend:** Solo modificar archivos dentro de `src/` del proyecto React (componentes, hooks, servicios, estilos).
+- **Frontend:** Solo modificar archivos dentro de `client/src/` del proyecto React (componentes, hooks, servicios, estilos).
 - **Backend:** Solo modificar archivos dentro de `server/` o `api/` del proyecto Express (rutas, controladores, servicios, middlewares).
 - **Documentación:** Solo modificar archivos dentro de `docs/`.
 - **Configuración:** Solo modificar archivos de configuración raíz (package.json, tsconfig.json, .env.example) con justificación explícita.
@@ -32,13 +32,14 @@
 
 ```
 tp1-turnos/
-├── src/                    # Frontend React
-│   ├── components/         # Componentes UI reutilizables
-│   ├── pages/              # Páginas/rutas de la app
-│   ├── hooks/              # Custom hooks
-│   ├── services/           # Llamadas a la API
-│   ├── types/              # Interfaces y tipos compartidos
-│   └── utils/              # Funciones helper
+├── client/                 # Frontend React (Vite)
+│   └── src/
+│       ├── components/     # Componentes UI reutilizables
+│       ├── pages/          # Páginas/rutas de la app
+│       ├── hooks/          # Custom hooks
+│       ├── services/       # Llamadas a la API
+│       ├── types/          # Interfaces y tipos compartidos
+│       └── utils/          # Funciones helper
 ├── server/                 # Backend Express
 │   ├── routes/             # Definición de rutas
 │   ├── controllers/        # Lógica de manejo de requests
