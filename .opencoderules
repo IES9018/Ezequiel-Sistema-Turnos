@@ -1,0 +1,53 @@
+# ARNÉS OPENCODE — Sistema de Turnos Peluquería/Barbería
+
+## 1. Alcance Permitido
+
+- **Frontend:** Solo modificar archivos dentro de `client/src/` del proyecto React (componentes, hooks, servicios, estilos).
+- **Backend:** Solo modificar archivos dentro de `server/` o `api/` del proyecto Express (rutas, controladores, servicios, middlewares).
+- **Documentación:** Solo modificar archivos dentro de `docs/`.
+- **Configuración:** Solo modificar archivos de configuración raíz (package.json, tsconfig.json, .env.example) con justificación explícita.
+- **Prohibido:** Modificar archivos de node_modules, package-lock.json sin justificación, o cualquier archivo del arnés (.opencoderules, INSTRUCTIONS.md).
+
+## 2. Estándares Técnicos Obligatorios
+
+- **Lenguaje:** TypeScript estricto en todo el proyecto (frontend y backend).
+- **Tipado:** Prohibido el uso del tipo `any`. Usar tipos explícitos o `unknown` con narrowing.
+- **Formato:** Usar Prettier con configuración del proyecto (2 espacios, sin punto y coma).
+- **Naming:** camel para variables y funciones, Pascal para componentes y tipos, UPPER_SNAKE para constantes globales.
+- **Commits:** Convencionales: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`.
+- **API REST:** Seguir convenciones RESTful (GET para lectura, POST para creación, PUT/PATCH para actualización, DELETE para eliminación).
+- **Respuestas API:** Siempre usar formato `{ success: boolean, data?: any, error?: string }`.
+
+## 3. Prácticas Prohibidas
+
+- No usar `any` como tipo.
+- No hardcodear strings de conexión a base de datos o secrets en el código fuente.
+- No crear componentes de más de 200 líneas (factorizar en sub-componentes).
+- No usar `console.log` en código de producción (usar un logger configurado).
+- No duplicar lógica de negocio entre frontend y backend (la validación de reglas de negocio es responsabilidad del backend).
+- No usar clases de React (solo componentes funcionales con hooks).
+- No instalar dependencias sin verificar que no exista una solución nativa o ya incluida en el proyecto.
+
+## 4. Estructura del Proyecto
+
+```
+tp1-turnos/
+├── client/                 # Frontend React (Vite)
+│   └── src/
+│       ├── components/     # Componentes UI reutilizables
+│       ├── pages/          # Páginas/rutas de la app
+│       ├── hooks/          # Custom hooks
+│       ├── services/       # Llamadas a la API
+│       ├── types/          # Interfaces y tipos compartidos
+│       └── utils/          # Funciones helper
+├── server/                 # Backend Express
+│   ├── routes/             # Definición de rutas
+│   ├── controllers/        # Lógica de manejo de requests
+│   ├── services/           # Lógica de negocio
+│   ├── middlewares/         # Auth, validación, errores
+│   └── prisma/             # Schema y migraciones
+├── docs/                   # Documentación
+│   └── adr/                # Architecture Decision Records
+├── .opencoderules          # Este arnés
+└── SPEC.md                 # Especificación del proyecto
+```
