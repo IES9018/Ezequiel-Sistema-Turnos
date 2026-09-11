@@ -1,0 +1,33 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias (server)
+        run: npm install
+
+      - name: Generar Prisma Client
+        env:
+          DATABASE_URL: postgresql://usuario:password@localhost:5432/turnos_db
+        run: npx prisma generate
+
+      - name: Typecheck servidor
+        run: npm run build
+
+      - name: Instalar dependencias (client)
+        run: npm install --prefix client
+
+      - name: Build client
+        run: npm --prefix client run build
+
+      - name: Lint client
+        run: npm --prefix client run lint
