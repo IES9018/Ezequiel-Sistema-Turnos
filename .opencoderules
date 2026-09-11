@@ -27,6 +27,8 @@
 - No duplicar lógica de negocio entre frontend y backend (la validación de reglas de negocio es responsabilidad del backend).
 - No usar clases de React (solo componentes funcionales con hooks).
 - No instalar dependencias sin verificar que no exista una solución nativa o ya incluida en el proyecto.
+- **PROHIBIDO introducir frameworks, bases de datos o servicios externos que no estén declarados en un ADR aprobado (ADR-001/002/003). Ante duda, proponer un ADR nuevo.**
+- **PROHIBIDO modificar la arquitectura documentada (monolito modular, persistencia PostgreSQL vía Prisma, API REST stateless) sin actualizar primero SPEC/ADR y diagramas C4 (`docs/arquitectura/`).**
 
 ## 4. Estructura del Proyecto
 
@@ -47,7 +49,8 @@ tp1-turnos/
 │   ├── middlewares/         # Auth, validación, errores
 │   └── prisma/             # Schema y migraciones
 ├── docs/                   # Documentación
-│   └── adr/                # Architecture Decision Records
+│   ├── adr/                # Architecture Decision Records
+│   └── arquitectura/       # Diagramas C4 (contexto y contenedores) — fuente viva de la arquitectura
 ├── .opencoderules          # Este arnés
 └── SPEC.md                 # Especificación del proyecto
 ```
