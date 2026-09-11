@@ -2,7 +2,7 @@
 
 ## 1. Contexto y Propósito
 
-Una peluquería/barbería necesita digitalizar la gestión de turnos para reducir la pérdida de clientes por demoras, llamados telefónicos y sobrecupos. El sistema permite a los clientes reservar turnos online seleccionando servicio, profesional y franja horaria, y al administrador gestionar la agenda, los profesionales y los servicios offered.
+Una peluquería/barbería necesita digitalizar la gestión de turnos para reducir la pérdida de clientes por demoras, llamados telefónicos y sobrecupos. El sistema permite a los clientes reservar turnos online seleccionando servicio, profesional y franja horaria, y al administrador gestionar la agenda, los profesionales y los servicios ofrecidos.
 
 ## 2. Requerimientos Funcionales
 
@@ -35,6 +35,16 @@ Una peluquería/barbería necesita digitalizar la gestión de turnos para reduci
 - **Autenticación:** JWT (JSON Web Tokens) con bcrypt para hashes de contraseñas.
 - **API REST:** Convenciones RESTful con respuestas JSON estandarizadas.
 - **Despliegue:** Docker para desarrollo local; deploy en plataforma cloud a definir.
+
+### Restricciones Arquitectónicas
+
+*Decididas en los ADR de la organización; todo cambio estructural requiere un ADR nuevo (ver arnés v2).*
+
+- **R-01:** El sistema adopta un **monolito modular** ([ADR-002](docs/adr/ADR-002-estilo-arquitectonico.md)): la API y las reglas de negocio viven en un único proceso desplegable, con módulos internos separados por dominio (auth, servicios, profesionales, turnos). No se introducen microservicios ni serverless.
+- **R-02:** La persistencia es **relacional (PostgreSQL 16+)** y se accede **únicamente vía Prisma ORM** ([ADR-003](docs/adr/ADR-003-persistencia.md)). No se permite SQL directo fuera de Prisma.
+- **R-03:** La **API es REST y sin estado**: el frontend es una SPA que consume HTTP/JSON; no se comparte estado entre server y client ([ADR-001](docs/adr/ADR-001-stack-tecnologico.md)).
+- **R-04:** El framework de frontend está restringido a **React + Vite + TailwindCSS**. No se incorporan frameworks, bases de datos ni servicios externos que no estén declarados en un ADR aprobado.
+- **R-05:** La autenticación es **JWT con bcrypt** y las reglas de negocio se validan siempre en backend (sostiene CA-02 y CA-05).
 
 ## 5. Contratos de Datos / Tipos
 
@@ -108,3 +118,10 @@ interface FranjaHoraria {
 - [ ] **CA-05:** La contraseña de los usuarios está hasheada con bcrypt (nunca se almacena en texto plano).
 - [ ] **CA-06:** La API retorna códigos HTTP correctos (200, 201, 400, 401, 404, 500) según la operación.
 - [ ] **CA-07:** El frontend es responsive y funciona en desktop y mobile.
+
+## 7. Changelog
+
+| Versión | Fecha | Motivo |
+|---|---|---|
+| v1 | 2026-08-25 | Versión inicial (TP1): alcance, requerimientos funcionales, Non-Goals y contratos de datos. |
+| v2 | 2026-09-11 | TP2/Sprint 2: se agregan las Restricciones Arquitectónicas (R-01…R-05) que citan ADR-001/002/003, y se traza cada restricción a los criterios de aceptación. No hay altas/bajas de requerimientos: el alcance (RF y Non-Goals) se mantiene. |
