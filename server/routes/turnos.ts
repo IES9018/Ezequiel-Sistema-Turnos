@@ -131,7 +131,7 @@ function calcularHoraFin(horaInicio: string, duracionMinutos: number): string {
   const h = Number(hStr);
   const m = Number(mStr);
   const totalMin = h * 60 + m + duracionMinutos;
-  const horas = Math.floor(totalMin / 60);
+  const horas = Math.floor(totalMin / 60) % 24;
   const minutos = totalMin % 60;
   return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
 }
