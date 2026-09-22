@@ -16,6 +16,7 @@ Una peluquería/barbería necesita digitalizar la gestión de turnos para reduci
 - [ ] **RF-08:** Dashboard administrativo con métricas básicas (turnos por día, ocupación, servicios más solicitados).
 - [ ] **RF-09:** Registro y login de usuarios (cliente y administrador) con roles diferenciados.
 - [ ] **RF-10:** Horarios especiales (feriados, días no laborables) configurables por el administrador.
+- [ ] **RF-11:** Accesibilidad básica (WCAG AA) en las 2 pantallas críticas (reserva de turno y mis turnos): navegación completa por teclado y contraste de color AA (4.5:1 texto normal, 3:1 elementos gráficos).
 
 ## 3. Non-Goals (Límites del Alcance)
 
@@ -119,9 +120,58 @@ interface FranjaHoraria {
 - [ ] **CA-06:** La API retorna códigos HTTP correctos (200, 201, 400, 401, 404, 500) según la operación.
 - [ ] **CA-07:** El frontend es responsive y funciona en desktop y mobile.
 
+### 6.1 Criterios de Interfaz — formato Gherkin (v3)
+
+Los criterios de aceptación que involucran las pantallas críticas se expresan en Gherkin (Given/When/Then):
+
+**CA-01 — Reserva de turno sin recarga:**
+
+```gherkin
+Dado que el cliente inició sesión y existen servicios y profesionales cargados
+Cuando selecciona un servicio, un profesional, una fecha posterior a hoy y una hora
+Y presiona "Confirmar reserva"
+Entonces el sistema valida la franja (CA-02) en el backend
+Y muestra un mensaje de confirmación con fecha y hora
+Y el turno aparece en "Mis turnos" sin recargar la página
+```
+
+**CA-03 — Vista diaria del administrador:**
+
+```gherkin
+Dado que el administrador inició sesión con rol ADMIN
+Cuando accede a la agenda del día
+Entonces ve la lista de turnos del día ordenados por hora
+Y cada turno muestra su estado con etiqueta legible + marca visual no dependiente del color
+```
+
+**CA-07 — Responsive:**
+
+```gherkin
+Dado el usuario con sesión iniciada en cualquier dispositivo
+Cuando abre la aplicación en una pantalla de 360px o mayor
+Entonces el formulario de reserva y la lista de turnos se adaptan sin scroll horizontal
+```
+
+**CA-08 — Accesibilidad básica (RF-11):**
+
+```gherkin
+Dado un usuario navegando solo con el teclado en la pantalla de reserva o mis turnos
+Cuando recorre los controles con la tecla Tab
+Entonces alcanza todos los campos, botones y acciones en orden lógico
+Y ve un indicador de foco visible en el elemento activo
+
+Dado un usuario con sesión iniciada visualizando cualquier pantalla crítica
+Cuando se comparan los pares de colores de textos y fondos
+Entonces cumplen relación de contraste AA (4.5:1 texto, 3:1 gráficos)
+Y el significado de un estado nunca depende solo del color
+```
+
+Nota: la corrección de los hallazgos H-01…H-04 (auditoría) y su trazabilidad están en `docs/diseno/auditoria-heuristica.md`.
+
 ## 7. Changelog
 
 | Versión | Fecha | Motivo |
 |---|---|---|
 | v1 | 2026-08-25 | Versión inicial (TP1): alcance, requerimientos funcionales, Non-Goals y contratos de datos. |
 | v2 | 2026-09-11 | TP2/Sprint 2: se agregan las Restricciones Arquitectónicas (R-01…R-05) que citan ADR-001/002/003, y se traza cada restricción a los criterios de aceptación. No hay altas/bajas de requerimientos: el alcance (RF y Non-Goals) se mantiene. |
+| v3 | 2026-09-11 | TP3/Sprint 2 (T4): nuevo requisito RF-11 (accesibilidad WCAG AA en las 2 pantallas críticas) y se agrega la sección 6.1 con los criterios de interfaz en formato Gherkin (CA-01, CA-03, CA-07) + nuevo CA-08. Se incorpora la referencia a la auditoría heurística. |
