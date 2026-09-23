@@ -34,6 +34,21 @@ Fricción clave: si el flujo de reserva alarga más de 3 pasos o le pide "pedir 
 
 Fricción clave: todo lo que exija más de una mirada de 5 segundos (scroll horizontal, tablas densas) no le sirve; necesita la lista del día legible de arriba abajo.
 
+### Persona 3 — Diego, el profesional que atiende turnos
+
+| Atributo | Detalle |
+|---|---|
+| Nombre | Diego Molina, 29, barbero empleado del equipo de Carlos (NG-05: única sucursal, varios profesionales) |
+| Rol en el sistema | Profesional **sin rol administrativo** (RF-02: alta de profesionales; RF-03: disponibilidad por profesional) |
+| Objetivo | Ver de un vistazo su franja del día y qué turno viene, sin tener que administrar nada |
+| Frustración principal | Le avisaban por WhatsApp "tenés uno a las 18"; a veces se enteraba tarde y el cliente esperaba |
+| Contexto de uso | La misma tablet del mostrador, entre un corte y otro, con la mano a veces ocupada; miradas de pocos segundos |
+| Vínculo con SPEC | RF-02 (su alta como profesional), RF-03 (su disponibilidad/franja), RF-06 (agenda del día, lectura de su franja) |
+
+Fricción clave: su base de trabajo (la silla) le oculta la pantalla mientras atiende; si la agenda no le muestra **ya armada su franja** (cuáles turnos son suyos), pierde el turno siguiente sin darse cuenta. Además no quiere tocar nada administrativo: solo necesita **leer su franja** y saber qué turno confirma.
+
+Diferencia clave con Carlos (Persona 2): Carlos administra (RF-06 semana/dashboard, RF-08); Diego **solo lee** la agenda del día en la vista que Carlos ya confirmó. Es el rol de menor carga cognitiva, y la interfaz no debe empujarlo a gestionar.
+
 ---
 
 ## 2. User Journeys
@@ -71,4 +86,35 @@ flowchart LR
 ```
 
 Puntos de abandono y mitigación:
-- **Sobrecarga visual** → mitigación: una lista legible por hora con estados, sin tablas densas ni scroll horizontal.
+- **Sobrecarga visual** → mitigación: lista simple de arriba abajo por hora, sin tablas densas ni scroll horizontal.
+
+### Journey 3 — Saber qué turnos tiene hoy (Diego)
+
+Flujo crítico: RF-03 + RF-06, sostiene CA-01 y CA-03 desde la mirada del ejecutor (el que atiende). Es el flujo que evita que el cliente espere de más.
+
+```mermaid
+flowchart LR
+    A["Diego abre la app\n(login como profesional)"] --> B["Ve la agenda del dia\nresaltada (RF-06)"]
+    B --> C["Su franja esta marcada\npor hora y estado"]
+    C -->|"CONFIRMADO"| D["Atiende el turno\ny lo cierra"]
+    C -->|"PENDIENTE"| E["Espera confirmacion\n(estado explicito)"]
+    C -. "abandono: no distingue\nsi el turno es suyo" .-> F["Mitigacion: su franja\nresaltada por color\ny por su nombre"]
+    C -. "abandono: duda si\nel proximo quedo" .-> G["Mitigacion: lista por hora\ncon estado + servicio a atender"]
+```
+
+Puntos de abandono y mitigación:
+- **No distinguir sus turnos dentro de la agenda del día** → mitigación: su franja resaltada con color y etiquetada con su nombre; el foco visual va directo a su próxima hora.
+- **Incertidumbre sobre el próximo turno confirmado** → mitigación: lista simple por hora con estado explícito (CONFIRMADO / PENDIENTE / CANCELADO) y el servicio a atender.
+
+Nota de accesibilidad (WCAG 2.2 AA): el resaltado de color de la franja **no es el único canal**; cada turno lleva también el estado en texto plano (contraste asegurable, ver `docs/diseno/auditoria-heuristica.md`, criterio 1.4.3 Contraste mínimo).
+
+---
+
+## 3. Consideraciones para el diseño del dashboard (insumo para el wireframe `dashboard.md`)
+
+El dashboard administrativo (RF-08, solo Carlos ADMIN) debe:
+
+1. **Ser legible en 5 segundos**: las métricas (turnos del día, ocupación, servicios más pedidos) en tarjetas grandes, nunca en tablas densas — sostiene CA-02 (ocupación) sin scroll horizontal.
+2. **Diferenciar el rol**: la vista administrativa queda reservada al rol ADMIN (RF-09); Diego (persona 3) nunca ve esta pantalla, su entrada es la agenda del día con su franja resaltada (CA-01).
+3. **No depender del color como único canal**: cada métrica combina número + texto de estado (etiqueta), cumpliendo WCAG 2.2 AA 1.4.3.
+4. **Presentar huecos accionables**: los huecos de la agenda (turnos cancelados, RF-07) se muestran como franjas libres marcadas para llenarlas, conectando con la mitigación del Journey 3.
