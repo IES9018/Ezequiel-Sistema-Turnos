@@ -1,0 +1,460 @@
+openapi: 3.1.0
+info:
+  title: Sistema de Turnos — API
+  version: 1.0.0
+  description: >
+    Contrato API-First del Sistema de Turnos (peluquería/barbería).
+    Define los 5 endpoints críticos que sostienen los flujos de los journeys
+    del TP3 (reserva de la clienta, agenda del día del admin y del profesional).
+    La implementación Express debe respetar este contrato: todo cambio de
+    endpoint empieza acá (regla del arnés v3).
+  contact:
+    name: Sistema de Turnos — ADI 2026
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /api
+    description: API montada por Express (mismo origen que la SPA)
+
+tags:
+  - name: auth
+    description: Autenticación y sesión
+  - name: servicios
+    description: Catálogo de servicios
+  - name: profesionales
+    description: Profesionales y su disponibilidad
+  - name: turnos
+    description: Reserva, consulta y ciclo de vida del turno
+
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Inicia sesión y devuelve un JWT
+      description: >
+        Autentica por email+password con bcrypt y firma un JWT (RF-09, CA-05).
+        Endpoint público (sin token previo).
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Faltan campos obligatorios (email/password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /servicios:
+    get:
+      tags: [servicios]
+      summary: Lista los servicios del catálogo
+      description: Devuelve los servicios disponibles para reservar (RF-01).
+      operationId: listServicios
+      responses:
+        '200':
+          description: Lista de servicios
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Servicio'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /profesionales/{id}/disponibilidad:
+    get:
+      tags: [profesionales]
+      summary: Disponibilidad semanal de un profesional
+      description: >
+        Devuelve los bloques de disponibilidad (RF-03) de un profesional,
+        ordenados por día y hora. Alimenta el selector de franjas del cliente.
+      operationId: getDisponibilidad
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del profesional
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bloques de disponibilidad
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Disponibilidad'
+        '404':
+          description: Profesional no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /turnos:
+    post:
+      tags: [turnos]
+      summary: Reserva un turno
+      description: >
+        Crea un turno validando en backend que el profesional esté libre en esa
+        franja (RF-04, CA-01, CA-02). La regla de no-superposición se evalúa en
+        el servidor sobre los turnos PENDIENTE/CONFIRMADO del día, incluyendo
+        cruce de medianoche y bordes contiguos.
+      operationId: createTurno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurnoRequest'
+      responses:
+        '201':
+          description: Turno creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/Turno'
+        '400':
+          description: Faltan campos obligatorios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Servicio o profesional no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: El profesional ya tiene un turno en ese horario (superposición)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /turnos/{id}/estado:
+    patch:
+      tags: [turnos]
+      summary: Cambia el estado de un turno (p. ej. cancelar)
+      description: >
+        Actualiza el estado del turno a PENDIENTE, CONFIRMADO, CANCELADO o
+        COMPLETADO (RF-07). Cancelar es el flujo de la clienta desde "Mis turnos".
+      operationId: updateTurnoEstado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del turno
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstadoRequest'
+      responses:
+        '200':
+          description: Turno actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  data:
+                    $ref: '#/components/schemas/Turno'
+        '400':
+          description: Estado inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Turno no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Token JWT firmado que identifica al usuario (claim `id` y `rol`).
+        Se envía como `Authorization: Bearer <token>`.
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: martina@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: secreto123
+
+    AuthResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          type: object
+          required: [token, usuario]
+          properties:
+            token:
+              type: string
+              description: JWT con vigencia de 7 días
+            usuario:
+              $ref: '#/components/schemas/UsuarioPublico'
+
+    UsuarioPublico:
+      type: object
+      required: [id, nombre, email, rol]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+          example: Martina López
+        email:
+          type: string
+          format: email
+        rol:
+          $ref: '#/components/schemas/Rol'
+
+    Servicio:
+      type: object
+      required: [id, nombre, duracionMinutos, precio, activo]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+          example: Corte de cabello
+        duracionMinutos:
+          type: integer
+          minimum: 0
+          example: 30
+        precio:
+          type: number
+          format: float
+          minimum: 0
+          example: 5000
+        activo:
+          type: boolean
+          example: true
+
+    Disponibilidad:
+      type: object
+      required: [id, profesionalId, dia, horaInicio, horaFin]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profesionalId:
+          type: string
+          format: uuid
+        dia:
+          $ref: '#/components/schemas/DiaSemana'
+        horaInicio:
+          type: string
+          pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+          example: '18:00'
+        horaFin:
+          type: string
+          pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+          example: '20:30'
+
+    TurnoRequest:
+      type: object
+      required: [clienteId, profesionalId, servicioId, fecha, horaInicio]
+      properties:
+        clienteId:
+          type: string
+          format: uuid
+        profesionalId:
+          type: string
+          format: uuid
+        servicioId:
+          type: string
+          format: uuid
+        fecha:
+          type: string
+          format: date
+          description: Fecha del turno (YYYY-MM-DD)
+          example: '2026-11-02'
+        horaInicio:
+          type: string
+          pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+          example: '18:00'
+
+    Turno:
+      type: object
+      required: [id, clienteId, profesionalId, servicioId, fecha, horaInicio, horaFin, estado]
+      properties:
+        id:
+          type: string
+          format: uuid
+        clienteId:
+          type: string
+          format: uuid
+        profesionalId:
+          type: string
+          format: uuid
+        servicioId:
+          type: string
+          format: uuid
+        fecha:
+          type: string
+          format: date-time
+        horaInicio:
+          type: string
+          pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+          example: '18:00'
+        horaFin:
+          type: string
+          pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+          example: '18:30'
+        estado:
+          $ref: '#/components/schemas/Estado'
+
+    EstadoRequest:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          $ref: '#/components/schemas/Estado'
+
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          const: false
+        error:
+          type: string
+          example: El profesional ya tiene un turno en ese horario
+
+    Rol:
+      type: string
+      enum: [ADMIN, CLIENTE]
+
+    Estado:
+      type: string
+      enum: [PENDIENTE, CONFIRMADO, CANCELADO, COMPLETADO]
+
+    DiaSemana:
+      type: string
+      enum: [LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO]
+
+security:
+  - bearerAuth: []

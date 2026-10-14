@@ -46,11 +46,26 @@ tp1-turnos/
 │   ├── routes/             # Definición de rutas
 │   ├── controllers/        # Lógica de manejo de requests
 │   ├── services/           # Lógica de negocio
-│   ├── middlewares/         # Auth, validación, errores
+│   ├── middlewares/        # Auth, validación, errores
 │   └── prisma/             # Schema y migraciones
 ├── docs/                   # Documentación
 │   ├── adr/                # Architecture Decision Records
-│   └── arquitectura/       # Diagramas C4 (contexto y contenedores) — fuente viva de la arquitectura
+│   ├── arquitectura/       # Diagramas C4 + api-contracts.yaml (fuente viva de la arquitectura)
+│   └── seguridad/          # Threat model y notas de seguridad
 ├── .opencoderules          # Este arnés
 └── SPEC.md                 # Especificación del proyecto
 ```
+
+## 5. Reglas de Seguridad (arnés v3 — TP4)
+
+*Operativas: el agente las verifica en cada cambio. Sostienen el threat model (`docs/seguridad/threat-model-lite.md`).*
+
+- PROHIBIDO hardcodear secrets, tokens o credenciales (usar variables de entorno).
+- OBLIGATORIO validar y sanear toda entrada externa en el borde del sistema.
+- OBLIGATORIO: todo endpoint nuevo debe estar en `api-contracts.yaml` ANTES de implementarse.
+
+Reglas complementarias (derivan del modelo de amenazas STRIDE):
+
+- OBLIGATORIO: la autorización por rol (`ADMIN`/`CLIENTE`) se resuelve en middleware, nunca confiando en datos del cliente (mitiga T-02/T-07).
+- OBLIGATORIO: nunca serializar el hash de `password` en respuestas (usar `select` explícito de Prisma) (mitiga T-05).
+- OBLIGATORIO: cambios de estado del turno dejan traza de auditoría (usuario, turno, estado anterior→nuevo) (mitiga T-04).
