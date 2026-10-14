@@ -49,6 +49,23 @@ Una peluquería/barbería necesita digitalizar la gestión de turnos para reduci
 
 ## 5. Contratos de Datos / Tipos
 
+*Desde v4 los contratos se **derivan del contrato OpenAPI** `docs/arquitectura/api-contracts.yaml` (API-First): los tipos de abajo referencian los schemas por nombre (`#/components/schemas/<Nombre>`). El YAML es la fuente de verdad; ante cualquier divergencia, se corrige primero el contrato.*
+
+| Tipo del dominio | Schema OpenAPI (fuente de verdad) |
+|---|---|
+| `Servicio` | [`Servicio`](docs/arquitectura/api-contracts.yaml) |
+| `Profesional` | `Profesional` (pendiente de exponer como schema; hoy el detalle va embebido) |
+| `Turno` (request) | [`TurnoRequest`](docs/arquitectura/api-contracts.yaml) |
+| `Turno` (respuesta) | [`Turno`](docs/arquitectura/api-contracts.yaml) |
+| `Usuario` (público) | [`UsuarioPublico`](docs/arquitectura/api-contracts.yaml) |
+| `Disponibilidad` | [`Disponibilidad`](docs/arquitectura/api-contracts.yaml) |
+| `estado` del turno | [`Estado`](docs/arquitectura/api-contracts.yaml) |
+| `rol` del usuario | [`Rol`](docs/arquitectura/api-contracts.yaml) |
+
+Endpoints críticos cubiertos (5): `POST /auth/login`, `GET /servicios`, `GET /profesionales/{id}/disponibilidad`, `POST /turnos`, `PATCH /turnos/{id}/estado`.
+
+Tipos TypeScript de referencia (alineados a los schemas anteriores):
+
 ```typescript
 interface Servicio {
   id: string;
@@ -79,7 +96,7 @@ interface Turno {
   fecha: Date;
   horaInicio: string;  // HH:mm
   horaFin: string;     // HH:mm
-  estado: "pendiente" | "confirmado" | "cancelado" | "completado";
+  estado: "PENDIENTE" | "CONFIRMADO" | "CANCELADO" | "COMPLETADO";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,7 +106,7 @@ interface Usuario {
   nombre: string;
   email: string;
   password: string;
-  rol: "admin" | "cliente";
+  rol: "ADMIN" | "CLIENTE";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -175,3 +192,4 @@ Nota: la corrección de los hallazgos H-01…H-04 (auditoría) y su trazabilidad
 | v1 | 2026-08-25 | Versión inicial (TP1): alcance, requerimientos funcionales, Non-Goals y contratos de datos. |
 | v2 | 2026-09-11 | TP2/Sprint 2: se agregan las Restricciones Arquitectónicas (R-01…R-05) que citan ADR-001/002/003, y se traza cada restricción a los criterios de aceptación. No hay altas/bajas de requerimientos: el alcance (RF y Non-Goals) se mantiene. |
 | v3 | 2026-09-11 | TP3/Sprint 2 (T4): nuevo requisito RF-11 (accesibilidad WCAG AA en las 2 pantallas críticas) y se agrega la sección 6.1 con los criterios de interfaz en formato Gherkin (CA-01, CA-03, CA-07) + nuevo CA-08. Se incorpora la referencia a la auditoría heurística. |
+| v4 | 2026-10-14 | TP4/Sprint 2: la sección 5 (Contratos de Datos) ahora **referencia los schemas de `docs/arquitectura/api-contracts.yaml`** (API-First) en lugar de ser la fuente primaria. Alineación de enums (`PENDIENTE/CONFIRMADO/CANCELADO/COMPLETADO`, `ADMIN/CLIENTE`) con el contrato. Se agrega el modelo de amenazas (`docs/seguridad/threat-model-lite.md`) y las reglas de seguridad del arnés v3. Sin altas/bajas de RF ni Non-Goals. |
