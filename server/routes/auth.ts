@@ -3,12 +3,24 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../prisma/client.js";
 import { ok, fail } from "../utils/responses.js";
+import { getJwtSecret } from "../config/env.js";
+import { createRateLimiter } from "../middlewares/rate-limit.js";
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || "cambiar-esta-clave-en-produccion";
+const loginLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 5,
+  message: "Demasiados intentos de inicio de sesión, probá en un minuto.",
+});
 
-router.post("/register", async (req, res) => {
+const registerLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 10,
+  message: "Demasiados registros desde esta IP, probá en un minuto.",
+});
+
+router.post("/register", registerLimiter, async (req, res) => {
   try {
     const { nombre, email, password } = req.body;
 
@@ -25,7 +37,7 @@ router.post("/register", async (req, res) => {
       data: { nombre, email, password: hash },
     });
 
-    const token = jwt.sign({ id: usuario.id, rol: usuario.rol }, JWT_SECRET, {
+    const token = jwt.sign({ id: usuario.id, rol: usuario.rol }, getJwtSecret(), {
       expiresIn: "7d",
     });
 
@@ -43,7 +55,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -57,7 +69,7 @@ router.post("/login", async (req, res) => {
     const valida = await bcrypt.compare(password, usuario.password);
     if (!valida) return fail(res, "Credenciales inválidas", 401);
 
-    const token = jwt.sign({ id: usuario.id, rol: usuario.rol }, JWT_SECRET, {
+    const token = jwt.sign({ id: usuario.id, rol: usuario.rol }, getJwtSecret(), {
       expiresIn: "7d",
     });
 

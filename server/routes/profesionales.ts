@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { prisma } from "../prisma/client.js";
 import { ok, fail } from "../utils/responses.js";
+import { rutaParam } from "../utils/http.js";
+import { authRequired, adminRequired } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
+router.get("/", authRequired, async (_req, res) => {
   try {
     const profesionales = await prisma.profesional.findMany({
       include: { disponibilidad: true },
@@ -17,10 +19,10 @@ router.get("/", async (_req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authRequired, async (req, res) => {
   try {
     const profesional = await prisma.profesional.findUnique({
-      where: { id: req.params.id },
+      where: { id: rutaParam(req, "id") },
       include: { disponibilidad: true },
     });
     if (!profesional) return fail(res, "Profesional no encontrado", 404);
@@ -31,7 +33,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authRequired, adminRequired, async (req, res) => {
   try {
     const { nombre, email, especialidad } = req.body;
 
@@ -49,11 +51,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", authRequired, adminRequired, async (req, res) => {
   try {
     const { nombre, email, especialidad, activo } = req.body;
     const profesional = await prisma.profesional.update({
-      where: { id: req.params.id },
+      where: { id: rutaParam(req, "id") },
       data: {
         nombre: nombre ?? undefined,
         email: email ?? undefined,
@@ -68,20 +70,20 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authRequired, adminRequired, async (req, res) => {
   try {
-    await prisma.profesional.delete({ where: { id: req.params.id } });
-    return ok(res, { id: req.params.id });
+    await prisma.profesional.delete({ where: { id: rutaParam(req, "id") } });
+    return ok(res, { id: rutaParam(req, "id") });
   } catch (err) {
     console.error(err);
     return fail(res, "Error al eliminar profesional", 500);
   }
 });
 
-router.get("/:id/disponibilidad", async (req, res) => {
+router.get("/:id/disponibilidad", authRequired, async (req, res) => {
   try {
     const disponibilidad = await prisma.disponibilidad.findMany({
-      where: { profesionalId: req.params.id },
+      where: { profesionalId: rutaParam(req, "id") },
       orderBy: [{ dia: "asc" }, { horaInicio: "asc" }],
     });
     return ok(res, disponibilidad);
@@ -91,7 +93,7 @@ router.get("/:id/disponibilidad", async (req, res) => {
   }
 });
 
-router.put("/:id/disponibilidad", async (req, res) => {
+router.put("/:id/disponibilidad", authRequired, adminRequired, async (req, res) => {
   try {
     const { bloques } = req.body;
 
@@ -99,13 +101,13 @@ router.put("/:id/disponibilidad", async (req, res) => {
       return fail(res, "bloques debe ser un array");
     }
 
-    await prisma.disponibilidad.deleteMany({ where: { profesionalId: req.params.id } });
+    await prisma.disponibilidad.deleteMany({ where: { profesionalId: rutaParam(req, "id") } });
 
     const creados = await prisma.$transaction(
       bloques.map((b: { dia: string; horaInicio: string; horaFin: string }) =>
         prisma.disponibilidad.create({
           data: {
-            profesionalId: req.params.id,
+            profesionalId: rutaParam(req, "id"),
             dia: b.dia as never,
             horaInicio: b.horaInicio,
             horaFin: b.horaFin,

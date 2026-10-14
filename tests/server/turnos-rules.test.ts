@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularHoraFin, seSuperponen } from "../../server/utils/turnos-rules.js";
+import { calcularHoraFin, seSuperponen, puedeCambiarEstado } from "../../server/utils/turnos-rules.js";
 
 describe("calcularHoraFin", () => {
   it("suma minutos dentro de la misma hora", () => {
@@ -57,5 +57,27 @@ describe("seSuperponen", () => {
     expect(
       seSuperponen({ horaInicio: "10:00", horaFin: "10:30" }, { horaInicio: "11:00", horaFin: "11:30" }),
     ).toBe(false);
+  });
+});
+
+describe("puedeCambiarEstado", () => {
+  const turno = { clienteId: "cli-1" };
+
+  it("el ADMIN puede aplicar cualquier transición", () => {
+    expect(puedeCambiarEstado("ADMIN", "otro", turno, "CONFIRMADO")).toBe(true);
+    expect(puedeCambiarEstado("ADMIN", "otro", turno, "COMPLETADO")).toBe(true);
+  });
+
+  it("el CLIENTE puede cancelar su propio turno", () => {
+    expect(puedeCambiarEstado("CLIENTE", "cli-1", turno, "CANCELADO")).toBe(true);
+  });
+
+  it("el CLIENTE no puede modificar el turno de otro (IDOR)", () => {
+    expect(puedeCambiarEstado("CLIENTE", "cli-2", turno, "CANCELADO")).toBe(false);
+  });
+
+  it("el CLIENTE no puede asignar estados distintos de CANCELADO", () => {
+    expect(puedeCambiarEstado("CLIENTE", "cli-1", turno, "CONFIRMADO")).toBe(false);
+    expect(puedeCambiarEstado("CLIENTE", "cli-1", turno, "COMPLETADO")).toBe(false);
   });
 });

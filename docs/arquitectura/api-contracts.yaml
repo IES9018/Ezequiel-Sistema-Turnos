@@ -1,13 +1,20 @@
 openapi: 3.1.0
 info:
   title: Sistema de Turnos — API
-  version: 1.0.0
+  version: 1.1.0
   description: >
     Contrato API-First del Sistema de Turnos (peluquería/barbería).
     Define los 5 endpoints críticos que sostienen los flujos de los journeys
     del TP3 (reserva de la clienta, agenda del día del admin y del profesional).
     La implementación Express debe respetar este contrato: todo cambio de
     endpoint empieza acá (regla del arnés v3).
+
+    **v1.1.0 (Sprint 3 — seguridad aplicada):** se formaliza la autorización por
+    rol (`bearerAuth` global + `403` en operaciones de administración), el
+    `429 Too Many Requests` del rate-limit en login y reserva, y el listado
+    `GET /turnos` con alcance por rol (ADMIN ve todo; CLIENTE solo lo propio) con
+    filtro opcional `?fecha=`. `TurnoRequest` ya no recibe `clienteId`: la
+    identidad se toma del JWT (mitiga IDOR, T-02).
   contact:
     name: Sistema de Turnos — ADI 2026
   license:
@@ -58,6 +65,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Demasiados intentos desde la misma IP (rate-limit, T-01/T-06)
           content:
             application/json:
               schema:
@@ -150,6 +163,53 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /turnos:
+    get:
+      tags: [turnos]
+      summary: Lista los turnos según el rol del usuario
+      description: >
+        Requiere autenticación (bearerAuth). Un **CLIENTE** recibe solo sus
+        turnos (filtrado en el backend por el `id` del JWT, no en el cliente);
+        un **ADMIN** recibe todos los turnos, ordenados por fecha y hora —
+        insumo de la agenda diaria (RF-06, CA-03). Acepta `?fecha=YYYY-MM-DD`
+        para acotar a un día concreto.
+      operationId: listTurnos
+      parameters:
+        - name: fecha
+          in: query
+          required: false
+          description: Filtra los turnos de una fecha concreta (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: '2026-11-02'
+      responses:
+        '200':
+          description: Turnos visibles para el usuario autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Turno'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags: [turnos]
       summary: Reserva un turno
@@ -157,7 +217,8 @@ paths:
         Crea un turno validando en backend que el profesional esté libre en esa
         franja (RF-04, CA-01, CA-02). La regla de no-superposición se evalúa en
         el servidor sobre los turnos PENDIENTE/CONFIRMADO del día, incluyendo
-        cruce de medianoche y bordes contiguos.
+        cruce de medianoche y bordes contiguos. La identidad del cliente se toma
+        del JWT (nunca del body): mitiga IDOR (T-02).
       operationId: createTurno
       requestBody:
         required: true
@@ -203,6 +264,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Demasiadas reservas desde la misma IP (rate-limit, T-06)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Error interno
           content:
@@ -216,7 +283,10 @@ paths:
       summary: Cambia el estado de un turno (p. ej. cancelar)
       description: >
         Actualiza el estado del turno a PENDIENTE, CONFIRMADO, CANCELADO o
-        COMPLETADO (RF-07). Cancelar es el flujo de la clienta desde "Mis turnos".
+        COMPLETADO (RF-07). Cancelar es el flujo de la clienta desde "Mis
+        turnos". Un **CLIENTE** solo puede cancelar sus propios turnos; un
+        **ADMIN** puede aplicar cualquier transición. Todo cambio registra una
+        traza de auditoría (usuario, estado anterior→nuevo) — mitiga repudio (T-04).
       operationId: updateTurnoEstado
       parameters:
         - name: id
@@ -254,6 +324,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: El cliente intenta modificar un turno que no es suyo, o una transición no permitida para su rol
           content:
             application/json:
               schema:
@@ -375,11 +451,8 @@ components:
 
     TurnoRequest:
       type: object
-      required: [clienteId, profesionalId, servicioId, fecha, horaInicio]
+      required: [profesionalId, servicioId, fecha, horaInicio]
       properties:
-        clienteId:
-          type: string
-          format: uuid
         profesionalId:
           type: string
           format: uuid

@@ -18,3 +18,17 @@ export function calcularHoraFin(horaInicio: string, duracionMinutos: number): st
 export function seSuperponen(a: Franja, b: Franja): boolean {
   return a.horaInicio < b.horaFin && b.horaInicio < a.horaFin;
 }
+
+export interface TurnoPropiedad {
+  clienteId: string;
+}
+
+export function puedeCambiarEstado(
+  rol: string,
+  usuarioId: string,
+  turno: TurnoPropiedad,
+  nuevoEstado: string,
+): boolean {
+  if (rol === "ADMIN") return true;
+  return rol === "CLIENTE" && turno.clienteId === usuarioId && nuevoEstado === "CANCELADO";
+}
