@@ -13,15 +13,18 @@ Fuente viva de la arquitectura del Sistema de Turnos.
 
 ## Contrato API-First (`api-contracts.yaml`)
 
-Define los **5 endpoints críticos** que sostienen los flujos de los journeys del TP3:
+Define los **6 endpoints críticos** que sostienen los flujos de los journeys del TP3:
 
 | # | Endpoint | Flujo / requisito |
 |---|---|---|
 | 1 | `POST /auth/login` | Sesión con JWT (RF-09, CA-05) |
 | 2 | `GET /servicios` | Catálogo para reservar (RF-01) |
 | 3 | `GET /profesionales/{id}/disponibilidad` | Franjas disponibles (RF-03) |
-| 4 | `POST /turnos` | Reserva + no-superposición (RF-04, CA-01, CA-02) |
-| 5 | `PATCH /turnos/{id}/estado` | Cancelación / ciclo de vida (RF-07) |
+| 4 | `GET /turnos` | Listado por rol: agenda del admin (RF-06/CA-03) o "mis turnos" (v1.1.0) |
+| 5 | `POST /turnos` | Reserva + no-superposición (RF-04, CA-01, CA-02) |
+| 6 | `PATCH /turnos/{id}/estado` | Cancelación / ciclo de vida (RF-07) |
+
+> **v1.1.0 (Sprint 3):** se agregó `GET /turnos` (alcance según rol), se formalizó la autorización por rol (`bearerAuth` + `403`), el `429` del rate-limit y se quitó `clienteId` de `TurnoRequest` (se toma del JWT, mitiga IDOR T-02).
 
 **Regla del arnés v3:** todo endpoint nuevo debe estar en `api-contracts.yaml` **antes** de implementarse. Los cambios de contrato empiezan en el YAML, no en las rutas Express.
 

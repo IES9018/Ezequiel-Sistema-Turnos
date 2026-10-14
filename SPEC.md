@@ -45,7 +45,7 @@ Una peluquería/barbería necesita digitalizar la gestión de turnos para reduci
 - **R-02:** La persistencia es **relacional (PostgreSQL 16+)** y se accede **únicamente vía Prisma ORM** ([ADR-003](docs/adr/ADR-003-persistencia.md)). No se permite SQL directo fuera de Prisma.
 - **R-03:** La **API es REST y sin estado**: el frontend es una SPA que consume HTTP/JSON; no se comparte estado entre server y client ([ADR-001](docs/adr/ADR-001-stack-tecnologico.md)).
 - **R-04:** El framework de frontend está restringido a **React + Vite + TailwindCSS**. No se incorporan frameworks, bases de datos ni servicios externos que no estén declarados en un ADR aprobado.
-- **R-05:** La autenticación es **JWT con bcrypt** y las reglas de negocio se validan siempre en backend (sostiene CA-02 y CA-05).
+- **R-05:** La autenticación es **JWT con bcrypt**; la **autorización es por rol** (`ADMIN`/`CLIENTE`) resuelta en middleware y la identidad se toma siempre del JWT (nunca del body). Las reglas de negocio se validan siempre en backend (sostiene CA-02 y CA-05). El rate-limit y la traza de auditoría son parte de esta restricción de seguridad.
 
 ## 5. Contratos de Datos / Tipos
 
@@ -193,3 +193,4 @@ Nota: la corrección de los hallazgos H-01…H-04 (auditoría) y su trazabilidad
 | v2 | 2026-09-11 | TP2/Sprint 2: se agregan las Restricciones Arquitectónicas (R-01…R-05) que citan ADR-001/002/003, y se traza cada restricción a los criterios de aceptación. No hay altas/bajas de requerimientos: el alcance (RF y Non-Goals) se mantiene. |
 | v3 | 2026-09-11 | TP3/Sprint 2 (T4): nuevo requisito RF-11 (accesibilidad WCAG AA en las 2 pantallas críticas) y se agrega la sección 6.1 con los criterios de interfaz en formato Gherkin (CA-01, CA-03, CA-07) + nuevo CA-08. Se incorpora la referencia a la auditoría heurística. |
 | v4 | 2026-10-14 | TP4/Sprint 2: la sección 5 (Contratos de Datos) ahora **referencia los schemas de `docs/arquitectura/api-contracts.yaml`** (API-First) en lugar de ser la fuente primaria. Alineación de enums (`PENDIENTE/CONFIRMADO/CANCELADO/COMPLETADO`, `ADMIN/CLIENTE`) con el contrato. Se agrega el modelo de amenazas (`docs/seguridad/threat-model-lite.md`) y las reglas de seguridad del arnés v3. Sin altas/bajas de RF ni Non-Goals. |
+| v5 | 2026-10-15 | Sprint 3 (seguridad aplicada): el contrato OpenAPI sube a **v1.1.0** (autorización por rol + `403`, `429` de rate-limit, `GET /turnos` con alcance por rol, `clienteId` fuera de `TurnoRequest`). Se **aplican en código** las mitigaciones del threat model: `authRequired`/`adminRequired`, rate-limit por IP + body-limit, y audit log (`AuditLog`). R-05 ampliada con autorización por rol e identidad desde el JWT. |

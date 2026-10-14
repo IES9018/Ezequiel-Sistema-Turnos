@@ -30,44 +30,54 @@ model Servicio {
 }
 
 model Profesional {
-  id             String              @id @default(uuid())
+  id             String           @id @default(uuid())
   nombre         String
-  email          String              @unique
+  email          String           @unique
   especialidad   String
-  activo         Boolean             @default(true)
+  activo         Boolean          @default(true)
   turnos         Turno[]
   disponibilidad Disponibilidad[]
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model Turno {
-  id             String   @id @default(uuid())
-  clienteId      String
-  profesionalId  String
-  servicioId     String
-  fecha          DateTime
-  horaInicio     String
-  horaFin        String
-  estado         Estado   @default(PENDIENTE)
-  cliente        Usuario  @relation(fields: [clienteId], references: [id])
-  profesional    Profesional @relation(fields: [profesionalId], references: [id])
-  servicio       Servicio @relation(fields: [servicioId], references: [id])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String      @id @default(uuid())
+  clienteId     String
+  profesionalId String
+  servicioId    String
+  fecha         DateTime
+  horaInicio    String
+  horaFin       String
+  estado        Estado      @default(PENDIENTE)
+  cliente       Usuario     @relation(fields: [clienteId], references: [id])
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
+  servicio      Servicio    @relation(fields: [servicioId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@unique([profesionalId, fecha, horaInicio])
 }
 
 model Disponibilidad {
-  id             String      @id @default(uuid())
-  profesionalId  String
-  dia            DiaSemana
-  horaInicio     String
-  horaFin        String
-  profesional    Profesional @relation(fields: [profesionalId], references: [id])
+  id            String      @id @default(uuid())
+  profesionalId String
+  dia           DiaSemana
+  horaInicio    String
+  horaFin       String
+  profesional   Profesional @relation(fields: [profesionalId], references: [id])
 
   @@unique([profesionalId, dia])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  usuarioId      String?
+  turnoId        String?
+  accion         String
+  estadoAnterior String?
+  estadoNuevo    String?
+  createdAt      DateTime @default(now())
 }
 
 enum Rol {

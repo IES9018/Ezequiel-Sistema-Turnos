@@ -1,8 +1,7 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import { fail } from "../utils/responses.js";
-
-const JWT_SECRET = process.env.JWT_SECRET || "cambiar-esta-clave-en-produccion";
+import { getJwtSecret } from "../config/env.js";
 
 export interface AuthPayload {
   id: string;
@@ -14,27 +13,36 @@ export interface AuthedRequest {
   userRol?: string;
 }
 
-export function authRequired(req: AuthedRequest & Request, res: Response, next: NextFunction) {
+export type AuthedReq = Request & AuthedRequest;
+
+export const authRequired: RequestHandler = (req, res, next) => {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    return fail(res, "Token no proporcionado", 401);
+    fail(res, "Token no proporcionado", 401);
+    return;
   }
 
   const token = header.slice(7);
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as AuthPayload;
-    req.userId = payload.id;
-    req.userRol = payload.rol;
-    return next();
+    const payload = jwt.verify(token, getJwtSecret()) as AuthPayload;
+    const authed = req as AuthedReq;
+    authed.userId = payload.id;
+    authed.userRol = payload.rol;
+    next();
   } catch {
-    return fail(res, "Token inválido o expirado", 401);
+    fail(res, "Token inválido o expirado", 401);
   }
+};
+
+export function requireRole(rol: string): RequestHandler {
+  return (req, res, next) => {
+    if ((req as AuthedReq).userRol !== rol) {
+      fail(res, "No tenés permisos para esta acción", 403);
+      return;
+    }
+    next();
+  };
 }
 
-export function adminRequired(req: AuthedRequest & Request, res: Response, next: NextFunction) {
-  if (req.userRol !== "ADMIN") {
-    return fail(res, "Requiere permisos de administrador", 403);
-  }
-  return next();
-}
+export const adminRequired = requireRole("ADMIN");

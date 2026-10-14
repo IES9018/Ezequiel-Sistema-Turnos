@@ -1,18 +1,38 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { prisma } from "../prisma/client.js";
 import { ok, fail } from "../utils/responses.js";
-import { calcularHoraFin, seSuperponen } from "../utils/turnos-rules.js";
+import { rutaParam } from "../utils/http.js";
+import { calcularHoraFin, seSuperponen, puedeCambiarEstado } from "../utils/turnos-rules.js";
+import { authRequired, adminRequired, type AuthedRequest } from "../middlewares/auth.js";
+import { createRateLimiter } from "../middlewares/rate-limit.js";
+import { buildCambioEstado, registrarAuditoria } from "../services/audit.js";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
+const reservaLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 20,
+  message: "Demasiadas reservas seguidas, probá en un minuto.",
+});
+
+const includeTurno = {
+  cliente: { select: { id: true, nombre: true, email: true } },
+  profesional: { select: { id: true, nombre: true } },
+  servicio: { select: { id: true, nombre: true, precio: true } },
+} as const;
+
+router.get("/", authRequired, async (req, res) => {
+  const authed = req as Request & AuthedRequest;
   try {
+    const fecha = typeof req.query.fecha === "string" ? req.query.fecha : undefined;
+    const esAdmin = authed.userRol === "ADMIN";
+
     const turnos = await prisma.turno.findMany({
-      include: {
-        cliente: { select: { id: true, nombre: true, email: true } },
-        profesional: { select: { id: true, nombre: true } },
-        servicio: { select: { id: true, nombre: true, precio: true } },
+      where: {
+        ...(esAdmin ? {} : { clienteId: authed.userId }),
+        ...(fecha ? { fecha: new Date(fecha) } : {}),
       },
+      include: includeTurno,
       orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
     });
     return ok(res, turnos);
@@ -22,17 +42,17 @@ router.get("/", async (_req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authRequired, async (req, res) => {
+  const authed = req as Request & AuthedRequest;
   try {
     const turno = await prisma.turno.findUnique({
-      where: { id: req.params.id },
-      include: {
-        cliente: { select: { id: true, nombre: true, email: true } },
-        profesional: { select: { id: true, nombre: true } },
-        servicio: { select: { id: true, nombre: true, precio: true } },
-      },
+      where: { id: rutaParam(req, "id") },
+      include: includeTurno,
     });
     if (!turno) return fail(res, "Turno no encontrado", 404);
+    if (authed.userRol !== "ADMIN" && turno.clienteId !== authed.userId) {
+      return fail(res, "No tenés permisos para ver este turno", 403);
+    }
     return ok(res, turno);
   } catch (err) {
     console.error(err);
@@ -40,9 +60,11 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authRequired, reservaLimiter, async (req, res) => {
+  const authed = req as Request & AuthedRequest;
   try {
-    const { clienteId, profesionalId, servicioId, fecha, horaInicio } = req.body;
+    const clienteId = authed.userId;
+    const { profesionalId, servicioId, fecha, horaInicio } = req.body;
 
     if (
       !clienteId ||
@@ -51,7 +73,7 @@ router.post("/", async (req, res) => {
       !fecha ||
       typeof horaInicio !== "string"
     ) {
-      return fail(res, "clienteId, profesionalId, servicioId, fecha y horaInicio son obligatorios");
+      return fail(res, "profesionalId, servicioId, fecha y horaInicio son obligatorios");
     }
 
     const [servicio, profesional] = await Promise.all([
@@ -81,7 +103,7 @@ router.post("/", async (req, res) => {
     );
 
     if (conflicto) {
-      return fail(res, "El profesional ya tiene un turno en ese horario");
+      return fail(res, "El profesional ya tiene un turno en ese horario", 409);
     }
 
     const turno = await prisma.turno.create({
@@ -101,7 +123,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/:id/estado", async (req, res) => {
+router.patch("/:id/estado", authRequired, async (req, res) => {
+  const authed = req as Request & AuthedRequest;
   try {
     const { estado } = req.body;
 
@@ -110,10 +133,24 @@ router.patch("/:id/estado", async (req, res) => {
       return fail(res, `estado debe ser uno de: ${permitidos.join(", ")}`);
     }
 
+    const actual = await prisma.turno.findUnique({ where: { id: rutaParam(req, "id") } });
+    if (!actual) return fail(res, "Turno no encontrado", 404);
+
+    const usuarioId = authed.userId ?? "";
+    const rol = authed.userRol ?? "";
+    if (!puedeCambiarEstado(rol, usuarioId, actual, estado)) {
+      return fail(res, "No tenés permisos para cambiar el estado de este turno", 403);
+    }
+
     const turno = await prisma.turno.update({
-      where: { id: req.params.id },
+      where: { id: rutaParam(req, "id") },
       data: { estado },
     });
+
+    await registrarAuditoria(
+      buildCambioEstado(usuarioId, turno.id, actual.estado, turno.estado),
+    );
+
     return ok(res, turno);
   } catch (err) {
     console.error(err);
@@ -121,10 +158,10 @@ router.patch("/:id/estado", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authRequired, adminRequired, async (req, res) => {
   try {
-    await prisma.turno.delete({ where: { id: req.params.id } });
-    return ok(res, { id: req.params.id });
+    await prisma.turno.delete({ where: { id: rutaParam(req, "id") } });
+    return ok(res, { id: rutaParam(req, "id") });
   } catch (err) {
     console.error(err);
     return fail(res, "Error al eliminar turno", 500);
