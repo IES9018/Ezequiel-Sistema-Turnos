@@ -3,6 +3,7 @@ import type { Usuario } from './types'
 import AuthForm from './components/AuthForm'
 import ReservaForm from './components/ReservaForm'
 import TurnosList from './components/TurnosList'
+import AdminAgenda from './components/AdminAgenda'
 
 function leerUsuario(): Usuario | null {
   const raw = localStorage.getItem('usuario')
@@ -47,10 +48,14 @@ export default function App() {
 
       <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
         {usuario ? (
-          <>
-            <ReservaForm clienteId={usuario.id} onReservado={() => setRefreshTurnos((r) => r + 1)} />
-            <TurnosList key={refreshTurnos} clienteId={usuario.id} />
-          </>
+          usuario.rol === 'ADMIN' ? (
+            <AdminAgenda />
+          ) : (
+            <>
+              <ReservaForm onReservado={() => setRefreshTurnos((r) => r + 1)} />
+              <TurnosList key={refreshTurnos} clienteId={usuario.id} />
+            </>
+          )
         ) : (
           <AuthForm onAutenticado={guardarSesion} />
         )}

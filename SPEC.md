@@ -11,7 +11,7 @@ Una peluquería/barbería necesita digitalizar la gestión de turnos para reduci
 - [ ] **RF-03:** Visualización de disponibilidad en calendario por día y profesional.
 - [ ] **RF-04:** Reserva de turno por parte del cliente (seleccionando servicio, profesional y fecha/hora disponible).
 - [ ] **RF-05:** Confirmación automática del turno por email o notificación.
-- [ ] **RF-06:** Listado de turnos del día para el administrador (vista diaria/semanal).
+- [x] **RF-06:** Listado de turnos del día para el administrador (vista diaria/semanal).
 - [ ] **RF-07:** Cancelación de turno por parte del cliente con antelación mínima configurable.
 - [ ] **RF-08:** Dashboard administrativo con métricas básicas (turnos por día, ocupación, servicios más solicitados).
 - [ ] **RF-09:** Registro y login de usuarios (cliente y administrador) con roles diferenciados.
@@ -131,7 +131,7 @@ interface FranjaHoraria {
 
 - [ ] **CA-01:** El cliente puede reservar un turno seleccionando servicio, profesional y horario disponible sin recargar la página.
 - [ ] **CA-02:** El sistema valida que no se superpongan turnos para un mismo profesional.
-- [ ] **CA-03:** El administrador puede ver todos los turnos del día en una vista de calendario.
+- [x] **CA-03:** El administrador puede ver todos los turnos del día en una vista de calendario.
 - [ ] **CA-04:** Los horarios especiales (feriados) impiden la reserva de turnos en esos días.
 - [ ] **CA-05:** La contraseña de los usuarios está hasheada con bcrypt (nunca se almacena en texto plano).
 - [ ] **CA-06:** La API retorna códigos HTTP correctos (200, 201, 400, 401, 404, 500) según la operación.
