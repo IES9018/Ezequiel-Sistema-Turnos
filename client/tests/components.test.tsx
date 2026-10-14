@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import ReservaForm from "../src/components/ReservaForm.js";
 import TurnosList from "../src/components/TurnosList.js";
+import AdminAgenda from "../src/components/AdminAgenda.js";
 import { api } from "../src/services/api.js";
 import type { Profesional, Servicio, TurnoDetalle } from "../src/types/index.js";
 
@@ -53,7 +54,7 @@ beforeEach(() => {
 describe("ReservaForm", () => {
   it("rechaza una fecha anterior a hoy sin llamar a la API", async () => {
     const onReservado = vi.fn();
-    render(<ReservaForm clienteId="c1" onReservado={onReservado} />);
+    render(<ReservaForm onReservado={onReservado} />);
     expect(await screen.findByText(/Corte/)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Servicio"), { target: { value: "s1" } });
@@ -72,7 +73,7 @@ describe("ReservaForm", () => {
   it("reserva un turno válido y avisa al padre", async () => {
     const onReservado = vi.fn();
     mockApi.reservar.mockResolvedValue(turno({}));
-    render(<ReservaForm clienteId="c1" onReservado={onReservado} />);
+    render(<ReservaForm onReservado={onReservado} />);
     expect(await screen.findByText(/Corte/)).toBeInTheDocument();
 
     const hoy = new Date().toISOString().slice(0, 10);
@@ -90,7 +91,7 @@ describe("ReservaForm", () => {
 
   it("traduce el error de superposición del backend a un mensaje claro", async () => {
     mockApi.reservar.mockRejectedValue(new Error("Superposición de turnos: el profesional ya tiene uno en ese horario"));
-    render(<ReservaForm clienteId="c1" onReservado={vi.fn()} />);
+    render(<ReservaForm onReservado={vi.fn()} />);
     expect(await screen.findByText(/Corte/)).toBeInTheDocument();
 
     const hoy = new Date().toISOString().slice(0, 10);
@@ -140,5 +141,50 @@ describe("TurnosList", () => {
     expect(confirm).toHaveBeenCalledWith("¿Cancelar este turno?");
     expect(mockApi.cancelarTurno).toHaveBeenCalledWith("t1");
     confirm.mockRestore();
+  });
+});
+
+describe("AdminAgenda", () => {
+  it("muestra los turnos del día ordenados por hora con etiqueta legible de estado", async () => {
+    mockApi.turnos.mockResolvedValue([
+      turno({
+        id: "t2",
+        horaInicio: "15:00",
+        horaFin: "15:30",
+        estado: "PENDIENTE",
+        cliente: { id: "c2", nombre: "Julián", email: "j@x.com" },
+      }),
+      turno({
+        id: "t1",
+        horaInicio: "09:00",
+        horaFin: "09:30",
+        estado: "CONFIRMADO",
+        cliente: { id: "c1", nombre: "Martina", email: "m@x.com" },
+      }),
+    ]);
+    render(<AdminAgenda />);
+
+    expect(await screen.findByText(/Martina/)).toBeInTheDocument();
+    const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("09:00");
+    expect(items[1]).toHaveTextContent("15:00");
+    expect(screen.getByText("Pendiente")).toBeInTheDocument();
+    expect(screen.getByText("Confirmado")).toBeInTheDocument();
+  });
+
+  it("avisa cuando no hay turnos para la fecha elegida", async () => {
+    mockApi.turnos.mockResolvedValue([]);
+    render(<AdminAgenda />);
+    expect(await screen.findByText(/No hay turnos para esta fecha/i)).toBeInTheDocument();
+  });
+
+  it("consulta a la API la fecha seleccionada", async () => {
+    mockApi.turnos.mockResolvedValue([]);
+    render(<AdminAgenda />);
+    await screen.findByText(/No hay turnos/i);
+
+    fireEvent.change(screen.getByLabelText("Fecha"), { target: { value: "2026-11-02" } });
+    expect(mockApi.turnos).toHaveBeenCalledWith("2026-11-02");
   });
 });

@@ -3,7 +3,6 @@ import { api } from '../services/api'
 import type { Profesional, Servicio } from '../types'
 
 interface Props {
-  clienteId: string
   onReservado: () => void
 }
 
@@ -12,7 +11,7 @@ interface Mensaje {
   texto: string
 }
 
-export default function ReservaForm({ clienteId, onReservado }: Props) {
+export default function ReservaForm({ onReservado }: Props) {
   const [servicios, setServicios] = useState<Servicio[]>([])
   const [profesionales, setProfesionales] = useState<Profesional[]>([])
   const [servicioId, setServicioId] = useState('')
@@ -63,7 +62,6 @@ export default function ReservaForm({ clienteId, onReservado }: Props) {
     setCargando(true)
     try {
       const turno = await api.reservar({
-        clienteId,
         profesionalId,
         servicioId,
         fecha,

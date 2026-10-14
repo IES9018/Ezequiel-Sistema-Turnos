@@ -34,7 +34,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 interface Reserva {
-  clienteId: string
   profesionalId: string
   servicioId: string
   fecha: string
@@ -71,8 +70,9 @@ export const api = {
     })
   },
 
-  turnos(): Promise<TurnoDetalle[]> {
-    return request<TurnoDetalle[]>('/turnos')
+  turnos(fecha?: string): Promise<TurnoDetalle[]> {
+    const query = fecha ? `?fecha=${encodeURIComponent(fecha)}` : ''
+    return request<TurnoDetalle[]>(`/turnos${query}`)
   },
 
   cancelarTurno(id: string): Promise<Turno> {
