@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma/client.js";
 import { ok, fail } from "../utils/responses.js";
+import { calcularHoraFin, seSuperponen } from "../utils/turnos-rules.js";
 
 const router = Router();
 
@@ -63,17 +64,21 @@ router.post("/", async (req, res) => {
 
     const horaFin = calcularHoraFin(horaInicio, servicio.duracionMinutos);
 
-    const conflicto = await prisma.turno.findFirst({
+    const turnosDelDia = await prisma.turno.findMany({
       where: {
         profesionalId,
         fecha: new Date(fecha),
         estado: { in: ["PENDIENTE", "CONFIRMADO"] },
-        OR: [
-          { horaInicio: { lt: horaFin }, horaFin: { gt: horaInicio } },
-          { horaInicio: horaInicio },
-        ],
       },
+      select: { horaInicio: true, horaFin: true },
     });
+
+    const conflicto = turnosDelDia.some((t) =>
+      seSuperponen(
+        { horaInicio, horaFin },
+        { horaInicio: t.horaInicio, horaFin: t.horaFin },
+      ),
+    );
 
     if (conflicto) {
       return fail(res, "El profesional ya tiene un turno en ese horario");
@@ -125,15 +130,5 @@ router.delete("/:id", async (req, res) => {
     return fail(res, "Error al eliminar turno", 500);
   }
 });
-
-function calcularHoraFin(horaInicio: string, duracionMinutos: number): string {
-  const [hStr, mStr] = horaInicio.split(":");
-  const h = Number(hStr);
-  const m = Number(mStr);
-  const totalMin = h * 60 + m + duracionMinutos;
-  const horas = Math.floor(totalMin / 60) % 24;
-  const minutos = totalMin % 60;
-  return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
-}
 
 export default router;

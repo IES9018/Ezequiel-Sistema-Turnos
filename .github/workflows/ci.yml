@@ -23,6 +23,9 @@ jobs:
       - name: Typecheck servidor
         run: npm run build
 
+      - name: Tests servidor (reglas de negocio puras)
+        run: npm test
+
       - name: Instalar dependencias (client)
         run: npm install --prefix client
 
@@ -31,3 +34,6 @@ jobs:
 
       - name: Lint client
         run: npm --prefix client run lint
+
+      - name: Tests client (servicios API + componentes)
+        run: npm --prefix client run test
