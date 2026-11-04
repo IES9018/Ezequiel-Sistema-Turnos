@@ -1,0 +1,9 @@
+# Lighthouse — Login (pantalla de entrada)
+perfil: mobile (Lighthouse 12, throttling simulado, 360x800)
+
+FCP             1.7 s  (numeric=1723 ms)
+LCP             1.7 s  (numeric=1723 ms)
+TBT            690 ms  (numeric=685 ms)
+Speed Index     2.3 s  (numeric=2270 ms)
+Performance score: 0.82
+Elemento LCP: <button type="button" class="w-full text-sm text-blue-600 hover:underline">

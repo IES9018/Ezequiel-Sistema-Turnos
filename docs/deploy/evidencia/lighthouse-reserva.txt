@@ -1,0 +1,9 @@
+# Lighthouse — Reserva de turno (cliente autenticado)
+perfil: mobile (Lighthouse 12, throttling simulado, 360x800)
+
+FCP             2.1 s  (numeric=2117 ms)
+LCP             2.5 s  (numeric=2486 ms)
+TBT            950 ms  (numeric=946 ms)
+Speed Index     2.9 s  (numeric=2876 ms)
+Performance score: 0.74
+Elemento LCP: <p class="mt-2 text-sm text-gray-500" aria-live="polite">

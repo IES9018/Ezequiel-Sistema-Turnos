@@ -94,103 +94,105 @@ export default function ReservaForm({ onReservado }: Props) {
     <section className="rounded-lg bg-white p-6 shadow" aria-busy={cargandoDatos}>
       <h2 className="text-lg font-semibold">Reservar turno</h2>
 
-      {cargandoDatos ? (
-        <p className="mt-2 text-sm text-gray-500">Cargando servicios y profesionales…</p>
-      ) : (
-        <>
-          <form onSubmit={enviar} className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium" htmlFor="servicio">
-                Servicio
-              </label>
-              <select
-                id="servicio"
-                value={servicioId}
-                onChange={(e) => setServicioId(e.target.value)}
-                required
-                className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <option value="">Seleccioná un servicio</option>
-                {servicios.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.nombre} ({s.duracionMinutos} min — ${s.precio})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium" htmlFor="profesional">
-                Profesional
-              </label>
-              <select
-                id="profesional"
-                value={profesionalId}
-                onChange={(e) => setProfesionalId(e.target.value)}
-                required
-                className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <option value="">Seleccioná un profesional</option>
-                {profesionales.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre} ({p.especialidad})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium" htmlFor="fecha">
-                Fecha
-              </label>
-              <input
-                id="fecha"
-                type="date"
-                min={hoy}
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                required
-                className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium" htmlFor="hora">
-                Hora
-              </label>
-              <input
-                id="hora"
-                type="time"
-                value={hora}
-                onChange={(e) => setHora(e.target.value)}
-                required
-                className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <p aria-live="polite" className="mb-3 min-h-5 text-sm">
-                {mensaje && (
-                  <span
-                    className={
-                      mensaje.tipo === 'ok' ? 'text-green-600' : 'text-red-600'
-                    }
-                  >
-                    {mensaje.texto}
-                  </span>
-                )}
-              </p>
-              <button
-                type="submit"
-                disabled={cargando || cargandoDatos}
-                className="w-full rounded bg-blue-600 py-2 text-white hover:bg-blue-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                {cargando ? 'Reservando…' : 'Confirmar reserva'}
-              </button>
-            </div>
-          </form>
-        </>
+      {cargandoDatos && (
+        <p className="mt-2 text-sm text-gray-500" aria-live="polite">
+          Cargando servicios y profesionales…
+        </p>
       )}
+
+      <form onSubmit={enviar} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium" htmlFor="servicio">
+            Servicio
+          </label>
+          <select
+            id="servicio"
+            value={servicioId}
+            onChange={(e) => setServicioId(e.target.value)}
+            disabled={cargandoDatos}
+            required
+            className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
+            <option value="">Seleccioná un servicio</option>
+            {servicios.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre} ({s.duracionMinutos} min — ${s.precio})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium" htmlFor="profesional">
+            Profesional
+          </label>
+          <select
+            id="profesional"
+            value={profesionalId}
+            onChange={(e) => setProfesionalId(e.target.value)}
+            disabled={cargandoDatos}
+            required
+            className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
+            <option value="">Seleccioná un profesional</option>
+            {profesionales.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre} ({p.especialidad})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium" htmlFor="fecha">
+            Fecha
+          </label>
+          <input
+            id="fecha"
+            type="date"
+            min={hoy}
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            required
+            className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium" htmlFor="hora">
+            Hora
+          </label>
+          <input
+            id="hora"
+            type="time"
+            value={hora}
+            onChange={(e) => setHora(e.target.value)}
+            required
+            className="mt-1 w-full rounded border px-3 py-2 focus-visible:outline-2 focus-visible:outline-blue-500"
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <p aria-live="polite" className="mb-3 min-h-5 text-sm">
+            {mensaje && (
+              <span
+                className={
+                  mensaje.tipo === 'ok' ? 'text-green-600' : 'text-red-600'
+                }
+              >
+                {mensaje.texto}
+              </span>
+            )}
+          </p>
+          <button
+            type="submit"
+            disabled={cargando || cargandoDatos}
+            className="w-full rounded bg-blue-600 py-2 text-white hover:bg-blue-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
+            {cargando ? 'Reservando…' : 'Confirmar reserva'}
+          </button>
+        </div>
+      </form>
     </section>
   )
 }

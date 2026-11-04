@@ -1,0 +1,7 @@
+
+> client@0.0.0 budget
+> node scripts/check-budget.mjs
+
+index-DwBFC4oX.js: 61.1 KB gzip
+Total JS: 61.1 KB gzip (presupuesto 200 KB)
+OK: dentro del presupuesto de peso inicial JS

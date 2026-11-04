@@ -27,7 +27,7 @@ Alcance: los **5 endpoints críticos** de `docs/arquitectura/api-contracts.yaml`
 | **T-05** | **I**nfo disclosure | Fuga de datos sensibles: el hash de password de `Usuario` podría viajar en respuestas que incluyen relaciones (p. ej. `cliente` embebido en turnos). | 2, 3, 4, 5 | Usar `select` explícito en Prisma para exponer solo `id/nombre/email` del cliente; nunca serializar `password`. | `server/routes/turnos.ts` (`include: { cliente: { select: {...} } }` ✓) · regla de arnés: PROHIBIDO hardcodear/exponer credenciales |
 | **T-06** | **D**oS | Sin límite de peticiones, un atacante satura `POST /turnos` (creación masiva) o `login`, degradando el servicio. | 1, 4 | **Rate-limit** por IP + `express.json({ limit })` para acotar el tamaño del body; validación temprana de campos obligatorios que corta peticiones basura. | `server/index.ts` (body limit 100kb ✓) · `server/middlewares/rate-limit.ts` ✓ · validación de campos ✓ en cada ruta |
 | **T-07** | **E**levation of privilege | Un usuario `CLIENTE` invoca endpoints administrativos (p. ej. `PUT /profesionales/{id}/disponibilidad`, alta/baja de servicios) y escala privilegios. | 3 y rutas admin | Middleware de **autorización por rol**: exigir `rol === "ADMIN"` en rutas de administración; el rol viaja firmado en el JWT. | `server/middlewares/auth.ts` (`adminRequired`/`requireRole("ADMIN")` ✓). Regla de arnés v3: contrato antes de implementar. |
-| **T-08** | **I**nfo disclosure (XSS) | Robo del JWT guardado en `localStorage` mediante XSS inyectado por datos reflejados. | Cliente SPA | Escapar todo dato renderizado (React lo hace por defecto), evitar `dangerouslySetInnerHTML`, y **CSP** restrictiva en el deploy. | `client/src/` (sin `dangerouslySetInnerHTML` ✓) · CSP: headers en el deploy (Sprint 3, ver ADR-005) |
+| **T-08** | **I**nfo disclosure (XSS) | Robo del JWT guardado en `localStorage` mediante XSS inyectado por datos reflejados. | Cliente SPA | Escapar todo dato renderizado (React lo hace por defecto), evitar `dangerouslySetInnerHTML`, y **CSP** restrictiva en el deploy. | `client/src/` (sin `dangerouslySetInnerHTML` ✓) · **CSP aplicada** en `server/middlewares/security-headers.ts` (Sprint 3) |
 
 Cobertura STRIDE: **S**poofing (T-01), **T**ampering (T-02, T-03), **R**epudiation (T-04), **I**nfo disclosure (T-05, T-08), **D**oS (T-06), **E**levation (T-07) → **8 amenazas** sobre los 5 endpoints (≥ 5 exigidas).
 
@@ -38,6 +38,10 @@ Cobertura STRIDE: **S**poofing (T-01), **T**ampering (T-02, T-03), **R**epudiati
 3. **T-04 — Audit log: ✅ aplicado.** `AuditLog` (Prisma) + `registrarAuditoria` en `server/services/audit.ts`, invocado en `PATCH /turnos/{id}/estado`.
 
 Pendiente para el deploy (Sprint 3, Fase 4): **CSP** restrictiva (T-08).
+
+## Estado
+
+Todas las amenazas T-01…T-08 tienen mitigación **aplicada en el código**. La CSP (T-08) se aplica globalmente en `server/middlewares/security-headers.ts` (`Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`) y se sirve tanto en la API como en los assets estáticos de producción.
 
 ## Relación con el arnés v3
 
