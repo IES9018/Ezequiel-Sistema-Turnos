@@ -1,9 +1,13 @@
-# Lighthouse — Agenda diaria (admin autenticado)
-perfil: mobile (Lighthouse 12, throttling simulado, 360x800)
+# Lighthouse — Agenda diaria (admin autenticado, medición directa)
 
-FCP             2.4 s  (numeric=2416 ms)
-LCP             2.6 s  (numeric=2588 ms)
-TBT            730 ms  (numeric=732 ms)
-Speed Index     2.4 s  (numeric=2416 ms)
-Performance score: 0.76
-Elemento LCP: <p class="mt-2 text-sm text-gray-500">
+perfil: mobile (Lighthouse 12.8, throttling simulado, 360x800)
+método: `localStorage` inyectado con Puppeteer (`evaluateOnNewDocument`) + `disableStorageReset=true`;
+        navegación directa a `/` **sin página-puente** (evita la navegación extra que inflaba el LCP).
+corridas: 3 · se reporta la **mediana** (máximo entre paréntesis)
+
+FCP             1.2 s  (numeric=1221 ms)
+LCP             1.6 s  (numeric=1607 ms; máximo 1745 ms)
+TBT           691 ms  (numeric=691 ms)
+Speed Index     1.8 s  (numeric=1780 ms)
+Performance score: 0.83
+Elemento LCP: <p class="mt-2 text-sm text-gray-500"> ("No hay turnos para esta fecha.")

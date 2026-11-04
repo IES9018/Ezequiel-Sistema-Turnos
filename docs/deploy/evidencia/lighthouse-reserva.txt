@@ -1,9 +1,13 @@
-# Lighthouse — Reserva de turno (cliente autenticado)
-perfil: mobile (Lighthouse 12, throttling simulado, 360x800)
+# Lighthouse — Reserva de turno (cliente autenticado, medición directa)
 
-FCP             2.1 s  (numeric=2117 ms)
-LCP             2.5 s  (numeric=2486 ms)
-TBT            950 ms  (numeric=946 ms)
-Speed Index     2.9 s  (numeric=2876 ms)
-Performance score: 0.74
-Elemento LCP: <p class="mt-2 text-sm text-gray-500" aria-live="polite">
+perfil: mobile (Lighthouse 12.8, throttling simulado, 360x800)
+método: `localStorage` inyectado con Puppeteer (`evaluateOnNewDocument`) + `disableStorageReset=true`;
+        navegación directa a `/` **sin página-puente** (evita la navegación extra que inflaba el LCP).
+corridas: 3 · se reporta la **mediana** (máximo entre paréntesis)
+
+FCP             1.3 s  (numeric=1291 ms)
+LCP             1.9 s  (numeric=1907 ms; máximo 2460 ms)
+TBT          1207 ms  (numeric=1207 ms)
+Speed Index     2.3 s  (numeric=2308 ms)
+Performance score: 0.75
+Elemento LCP: <p class="mt-2 text-sm text-gray-500" aria-live="polite"> (estado de carga/vacío)

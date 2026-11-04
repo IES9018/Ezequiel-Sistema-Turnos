@@ -1,5 +1,6 @@
 # Lighthouse — Login (pantalla de entrada)
 perfil: mobile (Lighthouse 12, throttling simulado, 360x800)
+método: Lighthouse CI (`@lhci/cli`) sobre `client/dist` estático; no requiere sesión.
 
 FCP             1.7 s  (numeric=1723 ms)
 LCP             1.7 s  (numeric=1723 ms)

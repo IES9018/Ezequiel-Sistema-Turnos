@@ -50,6 +50,6 @@ Mapa rápido: `client/` SPA React · `server/` API Express · `prisma/` modelo y
 2. **Decisión antes que código:** si cambia una decisión técnica, se crea/actualiza un ADR y, si toca seguridad, el threat model y los diagramas C4.
 3. **Contrato antes que implementación:** el endpoint se define en `api-contracts.yaml` y el lint de OpenAPI debe pasar.
 4. **Implementación con validación en el borde:** sanear toda entrada externa; autorización e identidad resueltas en middleware; traza de auditoría en cambios de estado.
-5. **Verificación local:** `npm run build` + `npm test` (server), `npm --prefix client run build|lint|test`, `npm --prefix client run budget` y Lighthouse cuando aplique.
+5. **Verificación local:** `npm run build` + `npm test` (server), `npm --prefix client run build|lint|test`, `npm --prefix client run budget` y Lighthouse cuando aplique. Toda medición de rendimiento declara herramienta, perfil y punto de entrada (sin navegaciones extra).
 6. **Flujo Git:** rama `feature/*` → PR con la plantilla → CI en verde → self-merge. Nunca commit directo a `main`.
 7. **Cierre de cambio:** actualizar `CHANGELOG.md` y el changelog/trazabilidad de `SPEC.md`; documentar incidentes de IA en `docs/auditoria/` y en el postmortem.

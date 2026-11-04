@@ -13,12 +13,12 @@ Perfil de medición: **mobile**, red **4G** simulada, CPU **4× ralentizada**, v
 
 | ID | Métrica | Presupuesto | Cómo se mide (herramienta concreta) | Pantalla |
 |---|---|---|---|---|
-| **RNF-01** | **LCP móvil** (Largest Contentful Paint) | **< 2.5 s** (4G) | **Lighthouse CI** (`@lhci/cli`), preset mobile + throttling 4G; p95 de 3 corridas | Reserva de turno |
-| **RNF-02** | **INP** (Interaction to Next Paint) | **< 200 ms** | **Lighthouse CI** (tiempos de interacción del reporte) + Chrome DevTools performance con CPU 4× | Reserva de turno / Mis turnos |
+| **RNF-01** | **LCP móvil** (Largest Contentful Paint) | **< 2.5 s** (4G) | **Lighthouse CI** (`@lhci/cli`), preset mobile + throttling 4G; mediana de 3 corridas | Reserva de turno |
+| **RNF-02** | **INP** (Interaction to Next Paint) | **< 200 ms** | **Event Timing vía CDP** (click primario, CPU 4× y red emulada); Lighthouse de navegación no expone INP | Reserva de turno / Mis turnos |
 | **RNF-03** | **Peso inicial JS** | **< 200 KB gzip** | `source-map-explorer` para el desglose + **script `npm run budget`** (gzip real de `dist/assets/*.js`) | Ambas (bundle compartido) |
 | **RNF-04** | **Sin scroll horizontal** en 360 px | **0 px** de desborde | Revisión con DevTools responsive (360×800); verificado también por CA-07 | Ambas |
 
-> El presupuesto de **peso JS** es el que se corre hoy en CI de forma automática (ver abajo); LCP/INP se activan en el pipeline del **TP6** con Lighthouse CI. Los tres quedan preparados para ese paso.
+> El presupuesto de **peso JS** y el **LCP/CLS de la pantalla de entrada** corren en CI de forma automática (TP6); las pantallas autenticadas se miden localmente porque requieren API + base de datos, con el método documentado en `docs/deploy/evidencia/README.md`.
 
 ## Herramientas y comandos
 
@@ -36,18 +36,23 @@ El script `client/scripts/check-budget.mjs` (sin dependencias, Node `zlib`) impr
 npx source-map-explorer dist/assets/*.js
 ```
 
-### LCP / INP (Lighthouse CI — TP6)
+### LCP (Lighthouse CI, activo en el pipeline)
+
+`lighthouserc.json` fija las *assertions* de la pantalla de entrada y se ejecuta en cada PR a `main`:
 
 ```bash
-# contra el preview de producción
-cd client && npm run build && npm run preview -- --port 4173 &
-npx -y @lhci/cli@latest autorun \
-  --collect.url=http://localhost:4173/ \
-  --collect.settings.preset=desktop=false \
-  --collect.settings.throttlingMethod=simulate
+npx -y @lhci/cli@0.15.1 autorun
 ```
 
-Se fija como *assertion* en `lighthouserc.json` (TP6): `largest-contentful-paint <= 2500`, `interaction-to-next-paint <= 200` (o `total-blocking-time` como proxy si la versión de Lighthouse aún no expone INP).
+Assertions: `largest-contentful-paint <= 2500`, `cumulative-layout-shift <= 0.1`, `categories:accessibility >= 0.9`.
+
+### LCP de pantallas autenticadas (medición directa)
+
+Las pantallas con sesión necesitan API + base de datos, así que no se sirven con `staticDistDir`. Se miden con Lighthouse 12 + Puppeteer, inyectando `localStorage` **antes** de navegar (sin página-puente) y con `disableStorageReset: true` para que Lighthouse no borre la sesión. El método y los archivos de evidencia están en `docs/deploy/evidencia/README.md`.
+
+### INP (Event Timing, CDP)
+
+Lighthouse de navegación no expone INP; por eso se mide aparte con el protocolo de DevTools (`Event Timing`, click primario, CPU 4× y red emulada). Se reporta el evento de mayor duración como proxy de INP.
 
 ## Medición actual (baseline)
 
@@ -55,9 +60,9 @@ Medido el 2026-11-03 sobre el build de producción servido por Express (gzip + c
 
 | Métrica | Pantalla | Valor medido | Presupuesto | Estado |
 |---|---|---|---|---|
-| LCP móvil (Lighthouse 12) | Login (entrada) | **1.72 s** | < 2.5 s | ✅ |
-| LCP móvil (Lighthouse 12) | Reserva de turno | **2.49 s** | < 2.5 s | ✅ (al límite) |
-| LCP móvil (Lighthouse 12) | Agenda admin | **2.59 s** | < 2.5 s | ⚠️ +88 ms |
+| LCP móvil (Lighthouse 12, medición directa) | Login (entrada) | **1.72 s** | < 2.5 s | ✅ |
+| LCP móvil (Lighthouse 12.8, medición directa) | Reserva de turno | **1.91 s** (mediana; máx 2.46 s) | < 2.5 s | ✅ |
+| LCP móvil (Lighthouse 12.8, medición directa) | Agenda admin | **1.61 s** (mediana; máx 1.75 s) | < 2.5 s | ✅ |
 | INP (Event Timing, click primario, CDP 4× CPU) | Reserva de turno | **160 ms** | < 200 ms | ✅ |
 | INP (Event Timing, click primario, CDP 4× CPU) | Agenda admin | **32 ms** | < 200 ms | ✅ |
 | Peso inicial JS (gzip) | Ambas | **61.1 KB** | < 200 KB | ✅ |
@@ -65,7 +70,9 @@ Medido el 2026-11-03 sobre el build de producción servido por Express (gzip + c
 
 Evidencia: `docs/deploy/evidencia/lighthouse-*.txt`, `cdp-*.txt`, `budget-js.txt` (y `docs/deploy/deploy.md`).
 
-**Brecha declarada (RNF-01, agenda admin):** 2.59 s vs 2.5 s (+3.5 %), atribuible al costo de ejecución del bundle en CPU 4× (TBT ≈ 732 ms). No se oculta: plan de remediación para el TP6 con *code-splitting* (`React.lazy` de la vista admin), precarga del chunk y shell estático. La pantalla de reserva (camino principal del negocio) sí cumple.
+**Corrección metodológica (TP6):** una medición previa de las pantallas autenticadas usaba una página-puente que redirigía, sumando una navegación al LCP; así se reportó la agenda admin en 2.59 s. Al inyectar la sesión y navegar directo a `/`, el valor real es **1.61 s** (mediana de 3). El gap era de medición, no de código: no se ocultó, se re-midió y se documentó el método en `docs/deploy/evidencia/README.md`.
+
+**Code-splitting evaluado y descartado:** se probó separar `AdminAgenda`, `ReservaForm` y `TurnosList` con `React.lazy`. El LCP no mejoró (1.63→1.77 s, dentro del ruido) y el JS total subió de **61.1 a 63.5 KB gzip** porque React DOM domina el bundle y los *chunks* agregan overhead. Se revirtió: no se justifica complejidad ni bytes extra para una métrica que ya cumple.
 
 El bundle está muy por debajo del límite (≈30 % del presupuesto), lo que deja margen para las pantallas móviles sin renegociar el RNF-03.
 

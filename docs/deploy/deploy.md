@@ -120,23 +120,23 @@ curl -sI -H 'Accept-Encoding: gzip' http://localhost:3001/assets/<index>.js \
 
 ## Presupuestos de rendimiento medidos (evidencia)
 
-Perfil: mobile, 360×800. LCP/FCP/TBT con **Lighthouse 12** (throttling simulado); INP con **CDP/Event Timing** (CPU 4× + red 4G lenta) sobre la interacción primaria. Salidas crudas en `docs/deploy/evidencia/`.
+Perfil: mobile, 360×800. LCP/FCP/TBT con **Lighthouse 12** (throttling simulado); en pantallas autenticadas la sesión se inyecta con Puppeteer (`localStorage`) y se navega directo a `/`, sin página-puente. INP con **CDP/Event Timing** (CPU 4× + red 4G lenta) sobre la interacción primaria. Salidas crudas en `docs/deploy/evidencia/` (ver `README.md` de esa carpeta).
 
 | Pantalla | LCP | Objetivo | INP (click primario) | Objetivo | Peso JS |
 |---|---|---|---|---|---|
 | Login (entrada) | **1.72 s** | < 2.5 s ✅ | — | — | — |
-| Reserva de turno | **2.49 s** | < 2.5 s ✅ | **160 ms** | < 200 ms ✅ | **61.1 KB gzip** ✅ (< 200) |
-| Agenda admin | **2.59 s** | < 2.5 s ⚠️ (+88 ms) | **32 ms** | < 200 ms ✅ | (bundle compartido) |
+| Reserva de turno | **1.91 s** (máx 2.46 s) | < 2.5 s ✅ | **160 ms** | < 200 ms ✅ | **61.1 KB gzip** ✅ (< 200) |
+| Agenda admin | **1.61 s** (máx 1.75 s) | < 2.5 s ✅ | **32 ms** | < 200 ms ✅ | (bundle compartido) |
 
 Evidencia: [`evidencia/lighthouse-login.txt`](evidencia/lighthouse-login.txt), [`evidencia/lighthouse-reserva.txt`](evidencia/lighthouse-reserva.txt), [`evidencia/lighthouse-agenda-admin.txt`](evidencia/lighthouse-agenda-admin.txt), [`evidencia/cdp-reserva.txt`](evidencia/cdp-reserva.txt), [`evidencia/cdp-agenda-admin.txt`](evidencia/cdp-agenda-admin.txt), [`evidencia/budget-js.txt`](evidencia/budget-js.txt).
 
-Brecha conocida: la agenda admin queda **3.5 % por encima** del LCP objetivo por el costo de ejecución del bundle (TBT ≈ 732 ms) en CPU 4×. Plan de remediación para el TP6: *code-splitting* con `React.lazy` de la vista admin, precarga del chunk y evaluación de un shell estático. No se oculta: se registra como deuda medida.
+Corrección metodológica: la primera medición de las pantallas autenticadas usaba una página-puente con redirección, que sumaba una navegación al LCP (agenda admin: 2.59 s). Al inyectar la sesión y navegar directo, el valor real es **1.61 s**: no había brecha de código, sino de medición. Se evaluó *code-splitting* con `React.lazy`: no mejoró el LCP y subió el JS de 61.1 a 63.5 KB gzip, por lo que se descartó (React DOM domina el bundle).
 
 ## Qué haría distinto (retrospectiva)
 
 1. **Migraciones versionadas** (`prisma migrate deploy`) en lugar de `db push` en el arranque del contenedor: `db push` es cómodo para demo pero no auditable ni seguro ante cambios destructivos.
 2. **PostgreSQL gestionado** (Neon/Supabase/RDS) y secretos en el gestor de la plataforma, no en variables del compose.
-3. **CI/CD**: pipeline que construya la imagen, corra tests y publique (TP6); y `Lighthouse CI` como *assertion* para bloquear regresiones de LCP/INP.
+3. **CI/CD**: el pipeline ya corre tests, presupuestos y `Lighthouse CI`; falta construir/publicar la imagen y usar `prisma migrate deploy` en el arranque.
 4. **HTTPS + HSTS** desde el día uno (hoy la verificación fue HTTP local).
 5. **Observabilidad**: logs estructurados y *healthcheck* de la dependencia DB en la app (hoy el health solo reporta el proceso).
 6. **Imagen más chica**: separar deps de producción y copiar el Prisma Client generado desde la etapa de build, en vez de instalar devDependencies en runtime.
