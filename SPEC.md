@@ -18,6 +18,19 @@ Una peluquería/barbería necesita digitalizar la gestión de turnos para reduci
 - [ ] **RF-10:** Horarios especiales (feriados, días no laborables) configurables por el administrador.
 - [ ] **RF-11:** Accesibilidad básica (WCAG AA) en las 2 pantallas críticas (reserva de turno y mis turnos): navegación completa por teclado y contraste de color AA (4.5:1 texto normal, 3:1 elementos gráficos).
 
+## 2.1 Requisitos No Funcionales (RNF)
+
+*Números verificables para las 2 pantallas críticas (reserva de turno y mis turnos). La fuente operativa es `docs/arquitectura/presupuestos-rendimiento.md`; perfil de medición: mobile, 4G simulada, CPU 4×, 360×800 px.*
+
+| ID | Requisito | Presupuesto | Verificación |
+|---|---|---|---|
+| **RNF-01** | LCP móvil (Largest Contentful Paint) | **< 2.5 s** (4G) | Lighthouse CI (mobile + throttling), p95 de 3 corridas |
+| **RNF-02** | INP (Interaction to Next Paint) | **< 200 ms** | Lighthouse CI + DevTools con CPU 4× |
+| **RNF-03** | Peso inicial JS | **< 200 KB gzip** | `npm run budget` (CI hoy) + `source-map-explorer` para desglose |
+| **RNF-04** | Sin scroll horizontal a 360 px | **0 px** de desborde | DevTools responsive 360×800; sostiene CA-07 |
+
+Trazabilidad: RNF-01…03 se derivan de ADR-006 y de los presupuestos; RNF-04 sostiene **CA-07** y **RNF-01…03** se miden sobre las pantallas de **RF-04/RF-07**. La estrategia mobile está en `docs/adr/ADR-006-estrategia-mobile.md` y el offline declarado como Non-Goal en `docs/arquitectura/offline-sync.md` (**NG-06**).
+
 ## 3. Non-Goals (Límites del Alcance)
 
 *Lo que explícitamente NO se construirá en esta etapa:*
@@ -194,3 +207,4 @@ Nota: la corrección de los hallazgos H-01…H-04 (auditoría) y su trazabilidad
 | v3 | 2026-09-11 | TP3/Sprint 2 (T4): nuevo requisito RF-11 (accesibilidad WCAG AA en las 2 pantallas críticas) y se agrega la sección 6.1 con los criterios de interfaz en formato Gherkin (CA-01, CA-03, CA-07) + nuevo CA-08. Se incorpora la referencia a la auditoría heurística. |
 | v4 | 2026-10-14 | TP4/Sprint 2: la sección 5 (Contratos de Datos) ahora **referencia los schemas de `docs/arquitectura/api-contracts.yaml`** (API-First) en lugar de ser la fuente primaria. Alineación de enums (`PENDIENTE/CONFIRMADO/CANCELADO/COMPLETADO`, `ADMIN/CLIENTE`) con el contrato. Se agrega el modelo de amenazas (`docs/seguridad/threat-model-lite.md`) y las reglas de seguridad del arnés v3. Sin altas/bajas de RF ni Non-Goals. |
 | v5 | 2026-10-15 | Sprint 3 (seguridad aplicada): el contrato OpenAPI sube a **v1.1.0** (autorización por rol + `403`, `429` de rate-limit, `GET /turnos` con alcance por rol, `clienteId` fuera de `TurnoRequest`). Se **aplican en código** las mitigaciones del threat model: `authRequired`/`adminRequired`, rate-limit por IP + body-limit, y audit log (`AuditLog`). R-05 ampliada con autorización por rol e identidad desde el JWT. |
+| v6 | 2026-11-03 | TP5/Sprint 3 (mobile): nueva sección **2.1 Requisitos No Funcionales** con presupuestos medibles (RNF-01 LCP < 2.5 s, RNF-02 INP < 200 ms, RNF-03 peso JS < 200 KB gzip, RNF-04 sin scroll horizontal a 360 px). Se agregan `ADR-006` (estrategia mobile: responsive web), `docs/arquitectura/presupuestos-rendimiento.md`, `docs/arquitectura/offline-sync.md` (Non-Goal **NG-06**) y los wireframes móviles de las 2 pantallas críticas. Sin altas/bajas de RF. |

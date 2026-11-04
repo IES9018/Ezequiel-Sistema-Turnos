@@ -8,8 +8,9 @@ Fuente viva de la arquitectura del Sistema de Turnos.
 |---|---|
 | `C4-contexto.md` | Diagrama C4 nivel 1 (sistema como caja negra, actores, sistemas externos) — TP2 |
 | `C4-contenedores.md` | Diagrama C4 nivel 2 (contenedores: SPA, API, base de datos) — TP2 |
-| `api-contracts.yaml` | **Contrato OpenAPI 3.1** de los 5 endpoints críticos — TP4 |
-| `presupuestos-rendimiento.md` | Presupuestos de rendimiento medibles (LCP/INP/peso JS) — TP5 (pendiente) |
+| `api-contracts.yaml` | **Contrato OpenAPI 3.1** de los endpoints críticos (v1.1.0) — TP4/Sprint 3 |
+| `presupuestos-rendimiento.md` | Presupuestos de rendimiento medibles (LCP/INP/peso JS) y script `npm run budget` — TP5 |
+| `offline-sync.md` | Non-Goal **NG-06** de offline/sincronización, justificado — TP5 |
 
 ## Contrato API-First (`api-contracts.yaml`)
 
