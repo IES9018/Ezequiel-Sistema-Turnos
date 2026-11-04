@@ -1,5 +1,7 @@
 # SPEC-000: Sistema de Turnos — Peluquería/Barbería
 
+> **Estado: vFinal — congelada para la defensa (release `v0.1.0`).** Los cambios posteriores al cierre requieren un ADR y una nueva versión con su fila en el changelog.
+
 ## 1. Contexto y Propósito
 
 Una peluquería/barbería necesita digitalizar la gestión de turnos para reducir la pérdida de clientes por demoras, llamados telefónicos y sobrecupos. El sistema permite a los clientes reservar turnos online seleccionando servicio, profesional y franja horaria, y al administrador gestionar la agenda, los profesionales y los servicios ofrecidos.
@@ -59,6 +61,7 @@ Trazabilidad: RNF-01…03 se derivan de ADR-006 y de los presupuestos; RNF-04 so
 - **R-03:** La **API es REST y sin estado**: el frontend es una SPA que consume HTTP/JSON; no se comparte estado entre server y client ([ADR-001](docs/adr/ADR-001-stack-tecnologico.md)).
 - **R-04:** El framework de frontend está restringido a **React + Vite + TailwindCSS**. No se incorporan frameworks, bases de datos ni servicios externos que no estén declarados en un ADR aprobado.
 - **R-05:** La autenticación es **JWT con bcrypt**; la **autorización es por rol** (`ADMIN`/`CLIENTE`) resuelta en middleware y la identidad se toma siempre del JWT (nunca del body). Las reglas de negocio se validan siempre en backend (sostiene CA-02 y CA-05). El rate-limit y la traza de auditoría son parte de esta restricción de seguridad.
+- **R-06:** La estrategia mobile es **responsive web (SPA)** y no una app nativa/PWA ([ADR-006](docs/adr/ADR-006-estrategia-mobile.md)); la sincronización offline es un **Non-Goal** ([NG-06](docs/arquitectura/offline-sync.md)). Los **RNF-01…RNF-04** son presupuestos verificados en CI (Lighthouse + peso JS), no objetivos aspiracionales.
 
 ## 5. Contratos de Datos / Tipos
 
@@ -208,3 +211,4 @@ Nota: la corrección de los hallazgos H-01…H-04 (auditoría) y su trazabilidad
 | v4 | 2026-10-14 | TP4/Sprint 2: la sección 5 (Contratos de Datos) ahora **referencia los schemas de `docs/arquitectura/api-contracts.yaml`** (API-First) en lugar de ser la fuente primaria. Alineación de enums (`PENDIENTE/CONFIRMADO/CANCELADO/COMPLETADO`, `ADMIN/CLIENTE`) con el contrato. Se agrega el modelo de amenazas (`docs/seguridad/threat-model-lite.md`) y las reglas de seguridad del arnés v3. Sin altas/bajas de RF ni Non-Goals. |
 | v5 | 2026-10-15 | Sprint 3 (seguridad aplicada): el contrato OpenAPI sube a **v1.1.0** (autorización por rol + `403`, `429` de rate-limit, `GET /turnos` con alcance por rol, `clienteId` fuera de `TurnoRequest`). Se **aplican en código** las mitigaciones del threat model: `authRequired`/`adminRequired`, rate-limit por IP + body-limit, y audit log (`AuditLog`). R-05 ampliada con autorización por rol e identidad desde el JWT. |
 | v6 | 2026-11-03 | TP5/Sprint 3 (mobile): nueva sección **2.1 Requisitos No Funcionales** con presupuestos medibles (RNF-01 LCP < 2.5 s, RNF-02 INP < 200 ms, RNF-03 peso JS < 200 KB gzip, RNF-04 sin scroll horizontal a 360 px). Se agregan `ADR-006` (estrategia mobile: responsive web), `docs/arquitectura/presupuestos-rendimiento.md`, `docs/arquitectura/offline-sync.md` (Non-Goal **NG-06**) y los wireframes móviles de las 2 pantallas críticas. Sin altas/bajas de RF. |
+| vFinal | 2026-11-03 | TP6/Cierre: **congelada para la defensa** (`v0.1.0`). Se agrega **R-06** que traza la estrategia mobile (ADR-006, NG-06) y los RNF-01…RNF-04 a su verificación automática en CI. Se consolida la trazabilidad SPEC ↔ ADR-001…006 ↔ restricciones R-01…R-06. Sin altas/bajas de RF ni CA. |

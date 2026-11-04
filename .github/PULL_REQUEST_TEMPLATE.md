@@ -13,6 +13,7 @@ Closes #<!-- Número de Issue vinculada en GitHub Projects -->
 
 ## Checklists de Supervisión Crítica
 ### Quality & Security Gate
+- [ ] El pipeline de CI está **en verde** (contrato OpenAPI + tests + build + presupuestos). **PR con CI rojo = merge prohibido.**
 - [ ] El código no expone credenciales, tokens ni datos sensibles (`secrets`).
 - [ ] Se han validado las entradas de datos contra vulnerabilidades de inyección.
 - [ ] Todo el código generado o asistido por IA fue auditado línea por línea por el estudiante.

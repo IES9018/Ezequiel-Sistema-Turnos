@@ -1,71 +1,55 @@
-# ARNÉS OPENCODE — Sistema de Turnos Peluquería/Barbería
+# ARNÉS OPENCODE — Sistema de Turnos Peluquería/Barbería (vFinal)
+
+> Consolidación de v1 (TP1), v2 (arquitectura), v3 (seguridad) y las reglas de proceso incorporadas hasta TP6. Organizado en **Alcance / Estándares / Prohibiciones / Proceso**.
 
 ## 1. Alcance Permitido
 
-- **Frontend:** Solo modificar archivos dentro de `client/src/` del proyecto React (componentes, hooks, servicios, estilos).
-- **Backend:** Solo modificar archivos dentro de `server/` o `api/` del proyecto Express (rutas, controladores, servicios, middlewares).
-- **Documentación:** Solo modificar archivos dentro de `docs/`.
-- **Configuración:** Solo modificar archivos de configuración raíz (package.json, tsconfig.json, .env.example) con justificación explícita.
-- **Prohibido:** Modificar archivos de node_modules, package-lock.json sin justificación, o cualquier archivo del arnés (.opencoderules, INSTRUCTIONS.md).
+- **Frontend:** `client/src/` (componentes, hooks, servicios, tipos, estilos).
+- **Backend:** `server/` (rutas, controladores, servicios, middlewares, utils).
+- **Datos:** `prisma/schema.prisma` y `prisma/seed.ts`.
+- **Documentación:** `docs/`, `SPEC.md`, `README.md`, `CHANGELOG.md`.
+- **Infraestructura/CI:** `.github/`, `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `lighthouserc.json`.
+- **Configuración raíz:** `package.json`, `tsconfig*.json`, `.env.example` — solo con justificación explícita en el PR.
+- **Prohibido modificar:** `node_modules/`, `dist/`, `.env`, `package-lock.json` (salvo justificación), y este arnés sin pedido explícito.
 
-## 2. Estándares Técnicos Obligatorios
+Mapa rápido: `client/` SPA React · `server/` API Express · `prisma/` modelo y seed · `docs/` ADR, arquitectura, seguridad, despliegue, auditoría · `.github/workflows/ci.yml` pipeline.
 
-- **Lenguaje:** TypeScript estricto en todo el proyecto (frontend y backend).
-- **Tipado:** Prohibido el uso del tipo `any`. Usar tipos explícitos o `unknown` con narrowing.
-- **Formato:** Usar Prettier con configuración del proyecto (2 espacios, sin punto y coma).
-- **Naming:** camel para variables y funciones, Pascal para componentes y tipos, UPPER_SNAKE para constantes globales.
-- **Commits:** Convencionales: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`.
-- **API REST:** Seguir convenciones RESTful (GET para lectura, POST para creación, PUT/PATCH para actualización, DELETE para eliminación).
-- **Respuestas API:** Siempre usar formato `{ success: boolean, data?: any, error?: string }`.
+## 2. Estándares Obligatorios
 
-## 3. Prácticas Prohibidas
+- **TypeScript estricto** en frontend y backend. Server con `strict`, `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes`; client con `noUnusedLocals`/`noUnusedParameters`.
+- **Tipado:** prohibido `any`; usar tipos explícitos o `unknown` con narrowing.
+- **Formato:** Prettier del proyecto (2 espacios, comillas simples, `semi: false`, `trailingComma: all`, `printWidth: 100`) en los archivos nuevos o modificados.
+- **Naming:** `camelCase` variables/funciones, `PascalCase` componentes/tipos, `UPPER_SNAKE_CASE` constantes globales.
+- **Commits:** convencionales (`feat:`, `fix:`, `refactor:`, `ci:`, `docs:`, `chore:`).
+- **API REST:** GET lectura, POST creación, PATCH actualización, DELETE baja; respuestas con sobre `{ success, data?, error? }` y códigos de estado correctos.
+- **Tests:** toda regla de negocio nueva lleva pruebas; las suites deben quedar verdes (server y client).
+- **Accesibilidad:** etiquetas legibles y estado transmitido por ícono/texto, no solo por color; objetivos táctiles ≥ 48 px.
+- **Rendimiento (RNF-01…04):** LCP < 2.5 s, INP < 200 ms, JS inicial < 200 KB gzip y sin scroll horizontal a 360 px. No se mergea un cambio que rompa estos presupuestos.
 
-- No usar `any` como tipo.
-- No hardcodear strings de conexión a base de datos o secrets en el código fuente.
-- No crear componentes de más de 200 líneas (factorizar en sub-componentes).
-- No usar `console.log` en código de producción (usar un logger configurado).
-- No duplicar lógica de negocio entre frontend y backend (la validación de reglas de negocio es responsabilidad del backend).
-- No usar clases de React (solo componentes funcionales con hooks).
-- No instalar dependencias sin verificar que no exista una solución nativa o ya incluida en el proyecto.
-- **PROHIBIDO introducir frameworks, bases de datos o servicios externos que no estén declarados en un ADR aprobado (ADR-001/002/003). Ante duda, proponer un ADR nuevo.**
-- **PROHIBIDO modificar la arquitectura documentada (monolito modular, persistencia PostgreSQL vía Prisma, API REST stateless) sin actualizar primero SPEC/ADR y diagramas C4 (`docs/arquitectura/`).**
+## 3. Prohibiciones
 
-## 4. Estructura del Proyecto
+- Usar `any`.
+- Hardcodear secrets, tokens, credenciales o strings de conexión (usar variables de entorno).
+- Versionar `.env` o datos sensibles.
+- Usar `console.log` en código de producción (usar logger configurado).
+- Duplicar lógica de negocio entre frontend y backend: las reglas se validan en backend.
+- Usar componentes de clase en React (solo funciones con hooks).
+- Crear componentes de más de 200 líneas (factorizar).
+- Instalar dependencias sin verificar que no exista una solución nativa o ya incluida.
+- Introducir frameworks, bases de datos o servicios externos no declarados en un ADR aprobado.
+- Modificar la arquitectura documentada (monolito modular, PostgreSQL vía Prisma, API REST stateless) sin actualizar primero SPEC/ADR y los diagramas C4.
+- Implementar un endpoint que no esté antes en `docs/arquitectura/api-contracts.yaml`.
+- Confiar en el rol o la identidad enviados por el cliente: se resuelven en middleware desde el JWT.
+- Serializar el hash de `password` en respuestas.
+- Cambiar el estado de un turno sin dejar traza de auditoría.
+- Mergear un PR con el pipeline de CI en rojo.
 
-```
-tp1-turnos/
-├── client/                 # Frontend React (Vite)
-│   └── src/
-│       ├── components/     # Componentes UI reutilizables
-│       ├── pages/          # Páginas/rutas de la app
-│       ├── hooks/          # Custom hooks
-│       ├── services/       # Llamadas a la API
-│       ├── types/          # Interfaces y tipos compartidos
-│       └── utils/          # Funciones helper
-├── server/                 # Backend Express
-│   ├── routes/             # Definición de rutas
-│   ├── controllers/        # Lógica de manejo de requests
-│   ├── services/           # Lógica de negocio
-│   ├── middlewares/        # Auth, validación, errores
-│   └── prisma/             # Schema y migraciones
-├── docs/                   # Documentación
-│   ├── adr/                # Architecture Decision Records
-│   ├── arquitectura/       # Diagramas C4 + api-contracts.yaml (fuente viva de la arquitectura)
-│   └── seguridad/          # Threat model y notas de seguridad
-├── .opencoderules          # Este arnés
-└── SPEC.md                 # Especificación del proyecto
-```
+## 4. Proceso
 
-## 5. Reglas de Seguridad (arnés v3 — TP4)
-
-*Operativas: el agente las verifica en cada cambio. Sostienen el threat model (`docs/seguridad/threat-model-lite.md`).*
-
-- PROHIBIDO hardcodear secrets, tokens o credenciales (usar variables de entorno).
-- OBLIGATORIO validar y sanear toda entrada externa en el borde del sistema.
-- OBLIGATORIO: todo endpoint nuevo debe estar en `api-contracts.yaml` ANTES de implementarse.
-
-Reglas complementarias (derivan del modelo de amenazas STRIDE):
-
-- OBLIGATORIO: la autorización por rol (`ADMIN`/`CLIENTE`) se resuelve en middleware, nunca confiando en datos del cliente (mitiga T-02/T-07).
-- OBLIGATORIO: nunca serializar el hash de `password` en respuestas (usar `select` explícito de Prisma) (mitiga T-05).
-- OBLIGATORIO: cambios de estado del turno dejan traza de auditoría (usuario, turno, estado anterior→nuevo) (mitiga T-04).
+1. **SPEC primero:** todo requisito, criterio de aceptación o Non-Goal se registra en `SPEC.md`.
+2. **Decisión antes que código:** si cambia una decisión técnica, se crea/actualiza un ADR y, si toca seguridad, el threat model y los diagramas C4.
+3. **Contrato antes que implementación:** el endpoint se define en `api-contracts.yaml` y el lint de OpenAPI debe pasar.
+4. **Implementación con validación en el borde:** sanear toda entrada externa; autorización e identidad resueltas en middleware; traza de auditoría en cambios de estado.
+5. **Verificación local:** `npm run build` + `npm test` (server), `npm --prefix client run build|lint|test`, `npm --prefix client run budget` y Lighthouse cuando aplique.
+6. **Flujo Git:** rama `feature/*` → PR con la plantilla → CI en verde → self-merge. Nunca commit directo a `main`.
+7. **Cierre de cambio:** actualizar `CHANGELOG.md` y el changelog/trazabilidad de `SPEC.md`; documentar incidentes de IA en `docs/auditoria/` y en el postmortem.
