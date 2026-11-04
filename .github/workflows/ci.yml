@@ -1,10 +1,20 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -13,27 +23,36 @@ jobs:
           cache: npm
 
       - name: Instalar dependencias (server)
-        run: npm install
+        run: npm ci
 
       - name: Generar Prisma Client
         env:
           DATABASE_URL: postgresql://usuario:password@localhost:5432/turnos_db
         run: npx prisma generate
 
+      - name: Lint del contrato OpenAPI
+        run: npx -y @redocly/cli@latest lint docs/arquitectura/api-contracts.yaml
+
       - name: Typecheck servidor
         run: npm run build
 
-      - name: Tests servidor (reglas de negocio puras)
+      - name: Tests servidor
         run: npm test
 
       - name: Instalar dependencias (client)
-        run: npm install --prefix client
+        run: npm ci --prefix client
 
       - name: Build client
         run: npm --prefix client run build
 
+      - name: Presupuesto de peso inicial JS
+        run: npm --prefix client run budget
+
       - name: Lint client
         run: npm --prefix client run lint
 
-      - name: Tests client (servicios API + componentes)
+      - name: Tests client
         run: npm --prefix client run test
+
+      - name: Presupuesto Lighthouse (LCP / CLS / a11y)
+        run: npx -y @lhci/cli@0.15.1 autorun

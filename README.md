@@ -1,5 +1,8 @@
 # Sistema de Turnos — Peluquería/Barbería
 
+[![CI](https://github.com/IES9018/Ezequiel-Sistema-Turnos/actions/workflows/ci.yml/badge.svg)](https://github.com/IES9018/Ezequiel-Sistema-Turnos/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/IES9018/Ezequiel-Sistema-Turnos)](https://github.com/IES9018/Ezequiel-Sistema-Turnos/releases)
+
 Aplicación web para gestionar turnos de una peluquería/barbería: reserva online de servicios, gestión de agenda de profesionales y panel administrativo.
 
 ## Stack Tecnológico
@@ -64,12 +67,19 @@ npm run dev
 | `npm run db:generate` | Generar cliente Prisma |
 | `npm run db:push` | Sincronizar schema con la DB |
 | `npm run db:migrate` | Crear migración |
+| `npm run db:seed` | Cargar datos de demo (idempotente) |
 | `npm run db:studio` | Abrir Prisma Studio |
+| `npm test` | Tests del servidor |
+| `npm --prefix client run test` | Tests del cliente |
+| `npm --prefix client run budget` | Verificar presupuesto de peso JS (gzip) |
 
 ## Documentación
 
 - [Especificación del proyecto (SPEC.md)](SPEC.md)
 - [Decisiones arquitectónicas (ADRs)](docs/adr/)
+- [Guía de despliegue](docs/deploy/deploy.md)
+- [Postmortem del cuatrimestre](docs/postmortem-cuatrimestre.md)
+- [Changelog](CHANGELOG.md)
 - [Informes de auditoría](docs/auditoria/)
 
 ## 🗓️ Gestión
