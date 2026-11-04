@@ -48,11 +48,13 @@ Piezas generadas con **OpenCode (big-pickle)** y **auditadas línea por línea**
 - **Corrección:** se midió la **interacción primaria** (botón "Confirmar reserva" / selector de fecha) y se separó la medición: Lighthouse para LCP y Event Timing vía CDP para INP. INP resultante: **160 ms** (reserva) y **32 ms** (agenda), dentro de presupuesto.
 - **Evidencia:** `docs/deploy/evidencia/cdp-*.txt`; PR [#18](https://github.com/IES9018/Ezequiel-Sistema-Turnos/pull/18).
 
-### 2.5 LCP de la agenda admin por encima del objetivo (brecha declarada)
+### 2.5 LCP de la agenda admin por encima del objetivo (brecha declarada — corregida en TP6)
 
-- **Hallazgo:** con Lighthouse mobile, la agenda admin mide **2.59 s** de LCP contra un objetivo de **2.5 s** (+88 ms, +3.5 %), con TBT ≈ 732 ms. La causa es el costo de ejecución del bundle en CPU 4× (el LCP es el primer render de React tras el JS).
-- **Decisión:** no se maquilló el número. Se registró como **deuda medida** en `docs/arquitectura/presupuestos-rendimiento.md` con plan de remediación para el TP6 (code-splitting con `React.lazy` de la vista admin, precarga de chunk, shell estático). La reserva de turno (camino principal) cumple: **2.49 s**.
+- **Hallazgo (luego corregido):** con Lighthouse mobile, la agenda admin medía **2.59 s** de LCP contra un objetivo de **2.5 s** (+88 ms, +3.5 %). En su momento se atribuyó al costo de ejecución del bundle; la re-medición mostró que era la navegación extra del puente (ver §7).
+- **Decisión:** no se maquilló el número. Se registró como **deuda medida** en `docs/arquitectura/presupuestos-rendimiento.md` con un plan de remediación para el TP6. La reserva de turno (camino principal) cumplía: **2.49 s** (re-medida: 1.91 s, ver §7).
 - **Evidencia:** PR [#18](https://github.com/IES9018/Ezequiel-Sistema-Turnos/pull/18).
+
+> **Corrección posterior (TP6):** el 2.59 s era un falso positivo de medición. Al inyectar la sesión con Puppeteer y navegar directo a `/` (sin página-puente), el LCP real es **1.61 s** (mediana de 3). Ver sección 7 y `docs/deploy/evidencia/README.md`.
 
 ### 2.6 Despliegue sin Docker en el entorno de desarrollo
 
@@ -85,14 +87,14 @@ El threat model (`docs/seguridad/threat-model-lite.md`) tiene **8 amenazas STRID
 - **Tests:** server **36/36** (6 archivos) y client **14/14** (2 archivos), local y en CI.
 - **Build/TypeScript estricto:** `npm run build` (server) y `tsc -b` (client) sin errores; `noUncheckedIndexedAccess`/`exactOptionalPropertyTypes`.
 - **Lint:** oxlint sin warnings; Redocly sin errores.
-- **Presupuestos (medidos):** LCP login **1.72 s** ✅, reserva **2.49 s** ✅, agenda admin **2.59 s** ⚠️ (+88 ms); INP click **160 ms** / **32 ms** ✅; JS **61.1 KB gzip** ✅ (<200); scroll horizontal @360 px **0** ✅.
+- **Presupuestos (medidos):** LCP login **1.72 s** ✅, reserva **1.91 s** ✅, agenda admin **1.61 s** ✅ (medición corregida, ver §7); INP click **160 ms** / **32 ms** ✅; JS **61.1 KB gzip** ✅ (<200); scroll horizontal @360 px **0** ✅.
 - **Checklists de PR:** plantilla + Quality/Security Gate en PRs #15–#18, con CI verde y self-merge.
 
 ---
 
 ## 5. Conclusiones
 
-El Sprint 3 cierra con los cinco entregables formales cubiertos: **DEL-S3-01** (API según contrato), **DEL-S3-02** (threat model aplicado), **DEL-S3-03** (presupuestos medidos con evidencia), **DEL-S3-04** (despliegue reproducible) y **DEL-S3-05** (este informe). El sistema pasa de "funcional en local" a **seguro, desplegado y medible**, con una brecha de rendimiento declarada y priorizada en vez de ocultada. La auditoría de la IA encontró errores concretos (inferencia de Express 5, `set-state-in-effect`, prop remanente, medición sesgada) y cada uno quedó corregido con evidencia trazable a PRs.
+El Sprint 3 cierra con los cinco entregables formales cubiertos: **DEL-S3-01** (API según contrato), **DEL-S3-02** (threat model aplicado), **DEL-S3-03** (presupuestos medidos con evidencia), **DEL-S3-04** (despliegue reproducible) y **DEL-S3-05** (este informe). El sistema pasa de "funcional en local" a **seguro, desplegado y medible**, con los presupuestos medidos y una corrección metodológica documentada (el falso positivo de LCP se re-midió, no se ocultó). La auditoría de la IA encontró errores concretos (inferencia de Express 5, `set-state-in-effect`, prop remanente, medición sesgada) y cada uno quedó corregido con evidencia trazable a PRs.
 
 ---
 
@@ -104,3 +106,11 @@ El Sprint 3 cierra con los cinco entregables formales cubiertos: **DEL-S3-01** (
 - Despliegue: `docs/deploy/deploy.md` · Evidencia: `docs/deploy/evidencia/`
 - Presupuestos: `docs/arquitectura/presupuestos-rendimiento.md` · ADR mobile: `docs/adr/ADR-006-estrategia-mobile.md`
 - Pipeline CI: https://github.com/IES9018/Ezequiel-Sistema-Turnos/actions
+
+## 7. Corrección posterior (TP6): falso positivo de LCP
+
+- **Qué se corrigió:** la medición de las pantallas autenticadas usaba una página-puente que escribía `localStorage` y redirigía a `/`; esa navegación extra se contabilizaba en el LCP. La agenda admin quedó reportada en **2.59 s**.
+- **Re-medición directa:** sesión inyectada con Puppeteer (`evaluateOnNewDocument`) + `disableStorageReset=true`, navegación directa a `/`. Resultados (mediana de 3): agenda admin **1.61 s** (máx 1.75 s) y reserva **1.91 s** (máx 2.46 s), ambas dentro de RNF-01.
+- **Code-splitting:** se implementó y midió `React.lazy` para las vistas por rol; no mejoró el LCP (1.63→1.77 s, ruido) y subió el JS total de **61.1 a 63.5 KB gzip**, así que se revirtió. La causa raíz era metodológica, no de código.
+- **Prevención:** método y archivos declarados en `docs/deploy/evidencia/README.md`; la evidencia cruda se actualizó (`lighthouse-reserva.txt`, `lighthouse-agenda-admin.txt`).
+- **Evidencia:** PR de cierre del TP6 (corrección de evidencia y documentación).
