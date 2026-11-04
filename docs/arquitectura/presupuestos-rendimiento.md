@@ -51,12 +51,21 @@ Se fija como *assertion* en `lighthouserc.json` (TP6): `largest-contentful-paint
 
 ## Medición actual (baseline)
 
-| Métrica | Valor medido | Fecha | Estado |
-|---|---|---|---|
-| Peso inicial JS (gzip) | **61.1 KB** | 2026-11-03 | ✅ dentro de presupuesto (200 KB) |
-| LCP móvil | *pendiente de Lighthouse en deploy/TP6* | — | ⏳ |
-| INP | *pendiente de Lighthouse en deploy/TP6* | — | ⏳ |
-| Scroll horizontal @360 px | 0 px (revisión responsive) | 2026-11-03 | ✅ |
+Medido el 2026-11-03 sobre el build de producción servido por Express (gzip + caché). Evidencia cruda en `docs/deploy/evidencia/`.
+
+| Métrica | Pantalla | Valor medido | Presupuesto | Estado |
+|---|---|---|---|---|
+| LCP móvil (Lighthouse 12) | Login (entrada) | **1.72 s** | < 2.5 s | ✅ |
+| LCP móvil (Lighthouse 12) | Reserva de turno | **2.49 s** | < 2.5 s | ✅ (al límite) |
+| LCP móvil (Lighthouse 12) | Agenda admin | **2.59 s** | < 2.5 s | ⚠️ +88 ms |
+| INP (Event Timing, click primario, CDP 4× CPU) | Reserva de turno | **160 ms** | < 200 ms | ✅ |
+| INP (Event Timing, click primario, CDP 4× CPU) | Agenda admin | **32 ms** | < 200 ms | ✅ |
+| Peso inicial JS (gzip) | Ambas | **61.1 KB** | < 200 KB | ✅ |
+| Scroll horizontal @360 px | Ambas | **0 px** | 0 px | ✅ |
+
+Evidencia: `docs/deploy/evidencia/lighthouse-*.txt`, `cdp-*.txt`, `budget-js.txt` (y `docs/deploy/deploy.md`).
+
+**Brecha declarada (RNF-01, agenda admin):** 2.59 s vs 2.5 s (+3.5 %), atribuible al costo de ejecución del bundle en CPU 4× (TBT ≈ 732 ms). No se oculta: plan de remediación para el TP6 con *code-splitting* (`React.lazy` de la vista admin), precarga del chunk y shell estático. La pantalla de reserva (camino principal del negocio) sí cumple.
 
 El bundle está muy por debajo del límite (≈30 % del presupuesto), lo que deja margen para las pantallas móviles sin renegociar el RNF-03.
 

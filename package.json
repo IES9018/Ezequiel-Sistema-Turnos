@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "test": "vitest run",
@@ -28,7 +29,9 @@
   "homepage": "https://github.com/IES9018/Ezequiel-Sistema-Turnos#readme",
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@types/compression": "^1.8.1",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

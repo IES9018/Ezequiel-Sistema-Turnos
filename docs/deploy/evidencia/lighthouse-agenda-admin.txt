@@ -1,0 +1,9 @@
+# Lighthouse — Agenda diaria (admin autenticado)
+perfil: mobile (Lighthouse 12, throttling simulado, 360x800)
+
+FCP             2.4 s  (numeric=2416 ms)
+LCP             2.6 s  (numeric=2588 ms)
+TBT            730 ms  (numeric=732 ms)
+Speed Index     2.4 s  (numeric=2416 ms)
+Performance score: 0.76
+Elemento LCP: <p class="mt-2 text-sm text-gray-500">
