@@ -79,6 +79,7 @@ npm run dev
 - [Decisiones arquitectónicas (ADRs)](docs/adr/)
 - [Guía de despliegue](docs/deploy/deploy.md)
 - [Informe final PP3](docs/informe-final.md)
+- [Compensatorio ADI (PDF)](docs/compensatorio-adi/informe-compensatorio-adi.pdf)
 - [Postmortem del cuatrimestre](docs/postmortem-cuatrimestre.md)
 - [Changelog](CHANGELOG.md)
 - [Informes de auditoría](docs/auditoria/)
